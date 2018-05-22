@@ -1,3 +1,8 @@
+body {
+    background: black;
+    color: whitesmoke;
+}
+
 canvas {
     padding: 0;
     margin: auto;
@@ -7,7 +12,7 @@ canvas {
     bottom: 0;
     left: 0;
     right: 0;
-    border: 1px solid #000000;
+    border: 2px solid whitesmoke;
 }
 
 body {

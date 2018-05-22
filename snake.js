@@ -24,8 +24,9 @@ var GameDifficuly = Object.freeze({
 
 var GameState = Object.freeze({
     StartMenu: 0,
-    Playing: 1,
-    Dead: 2
+    Instructions: 1,
+    Playing: 2,
+    GameOver: 3
 });
 
 var Keys = Object.freeze({
@@ -54,8 +55,8 @@ class Square extends Point {
     }
 
     draw() {
-        this.game.context2d.fillStyle = "#000000";
-        this.game.context2d.fillRect(
+        this.game.ctx.fillStyle = "#000000";
+        this.game.ctx.fillRect(
             Math.ceil(this.x * this.game.unitWidth),
             Math.ceil(this.y * this.game.unitWidth),
             Math.ceil(this.size * this.game.unitWidth),
@@ -145,7 +146,7 @@ class Snake {
             newHead.y < 0 ||
             this.body.find(square => square.equals(newHead))) {
             if (this.dying) {
-                this.game.gameState = GameState.Dead;
+                this.game.gameState = GameState.GameOver;
             } else {
                 this.dying = true;
             }
@@ -177,7 +178,7 @@ class SnakeGame {
         this.canvas = canvas;
         this.interval = interval;
 
-        this.context2d = this.canvas.getContext("2d");
+        this.ctx = this.canvas.getContext("2d");
         this.background = "#8dc100";
 
         this.snake = new Snake(this, [
@@ -246,10 +247,24 @@ class SnakeGame {
     
     start() {
         game.onresize();
-        this.timer = setInterval(() => {
-            this.update();
-            this.draw();
-        }, this.interval)
+        
+        var then = Date.now();
+        var timeSinceLastFrame = 0;
+
+        let animationCallback = () => {
+            let now = Date.now();
+            let elapsed = now - then;
+            then = now;
+
+            timeSinceLastFrame += elapsed;
+            if (timeSinceLastFrame > this.interval) {
+                timeSinceLastFrame -= this.interval;
+                this.update();
+                this.draw();
+            }
+            requestAnimationFrame(animationCallback);
+        }
+        requestAnimationFrame(animationCallback);
     }
 
     update() {
@@ -262,8 +277,8 @@ class SnakeGame {
     }
     
     draw() {
-        this.context2d.fillStyle = this.background;
-        this.context2d.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        this.ctx.fillStyle = this.background;
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
         this.snake.draw();
         this.apple.draw();
