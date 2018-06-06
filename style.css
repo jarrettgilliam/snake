@@ -18,3 +18,11 @@ canvas {
 body {
     margin: 0px;
 }
+
+#preloader {
+    font-family: 'Press Start 2P';
+    opacity:0;
+    height:0;
+    width:0;
+    display:inline-block;
+}
