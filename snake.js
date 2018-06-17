@@ -19,19 +19,17 @@ var Snake = (function () {
 
     var Difficuly = Object.freeze({
         Placebo: 2000,
-        VeryEasy: 1000,
+        Very_Easy: 800,
         Easy: 400,
         Medium: 200,
         Hard: 100,
-        StupidHard: 50
+        Stupid_Hard: 50
     });
 
     var GameState = Object.freeze({
         StartMenu: 0,
-        Instructions: 1,
-        Playing: 2,
-        Paused: 3,
-        GameOver: 4
+        Playing: 1,
+        GameOver: 2
     });
 
     var Keys = Object.freeze({
@@ -42,7 +40,8 @@ var Snake = (function () {
         W: 87,
         A: 65,
         S: 83,
-        D: 68
+        D: 68,
+        Enter: 13
     });
 
     var Direction = Object.freeze({
@@ -54,19 +53,119 @@ var Snake = (function () {
     });
 
     class CanvasLabel {
-        constructor(game, text, sizeFactor) {
+        constructor(game, text, sizeFactor, YFactor, XFactor = 1 / 2) {
             this.game = game;
-            this.text = text;
+
+            if (Object.getPrototypeOf(text) === Function.prototype) {
+                this.text = text;
+            } else {
+                this.text = () => text;
+            }
+
             this.sizeFactor = sizeFactor;
+            this.YFactor = YFactor;
+            this.XFactor = XFactor;
+        }
+
+        get textColor() {
+            return "#000000";
+        }
+
+        get textBaseline() {
+            return "alphabetic";
+        }
+
+        get XPos() {
+            return this.game.canvas.width * this.XFactor - this.width / 2;
+        }
+
+        get YPos() {
+            return this.game.canvas.height * this.YFactor;
+        }
+
+        get width() {
+            return this.game.ctx.measureText(this.text()).width;
+        }
+
+        get height() {
+            return this.fontSize * 0.85;
+        }
+
+        get fontSize() {
+            return Math.round(this.game.unitWidth) * this.sizeFactor
+        }
+
+        setFont() {
+            this.game.ctx.font = this.fontSize + "px 'Press Start 2P'";
         }
 
         draw() {
-            this.game.ctx.font = Math.round(this.game.unitWidth) * this.sizeFactor + "px 'Press Start 2P'";
-            this.game.ctx.fillStyle = "#000000";
+            this.setFont();
+            this.game.ctx.fillStyle = this.textColor;
+            this.game.ctx.textBaseline = this.textBaseline;
             this.game.ctx.fillText(
-                this.text,
-                Math.round(this.game.canvas.width / 2 - this.game.ctx.measureText(this.text).width / 2),
-                Math.round(this.game.canvas.height / 2));
+                this.text(),
+                this.XPos,
+                this.YPos,
+                this.game.canvas.width);
+        }
+    }
+
+    class CanvasButton extends CanvasLabel {
+        constructor(game, text, sizeFactor, YFactor, XFactor) {
+            super(game, text, sizeFactor, YFactor, XFactor)
+            this.hovering = false;
+        }
+
+        get textColor() {
+            if (this.hovering) {
+                return this.game.background;
+            } else {
+                return super.textColor;
+            }
+        }
+
+        get textBaseline() {
+            return "top";
+        }
+
+        get lineWidth() {
+            return this.game.unitWidth / 10 * this.sizeFactor;
+        }
+
+        get padding() {
+            return this.game.unitWidth / 3 * this.sizeFactor;
+        }
+
+        intersects(point) {
+            if (point.x >= this.XPos &&
+                point.x <= this.XPos + this.width &&
+                point.y >= this.YPos &&
+                point.y <= this.YPos + this.height) {
+                return true;
+            }
+            return false;
+        }
+
+        draw() {
+            this.setFont();
+            this.game.ctx.lineWidth = this.lineWidth;
+
+            let func;
+            if (this.hovering) {
+                func = this.game.ctx.fillRect;
+            } else {
+                func = this.game.ctx.strokeRect;
+            }
+
+            func.call(
+                this.game.ctx,
+                this.XPos - this.padding,
+                this.YPos - this.padding,
+                this.width + this.padding * 2,
+                this.height + this.padding * 2);
+
+            super.draw();
         }
     }
 
@@ -97,10 +196,10 @@ var Snake = (function () {
 
         updateBody() {
             this.body = [
-                new Square(this.game, this.position.x + 0/3, this.position.y + 1/3, 1/3),
-                new Square(this.game, this.position.x + 1/3, this.position.y + 0/3, 1/3),
-                new Square(this.game, this.position.x + 2/3, this.position.y + 1/3, 1/3),
-                new Square(this.game, this.position.x + 1/3, this.position.y + 2/3, 1/3)
+                new Square(this.game, this.position.x + 0 / 3, this.position.y + 1 / 3, 1 / 3),
+                new Square(this.game, this.position.x + 1 / 3, this.position.y + 0 / 3, 1 / 3),
+                new Square(this.game, this.position.x + 2 / 3, this.position.y + 1 / 3, 1 / 3),
+                new Square(this.game, this.position.x + 1 / 3, this.position.y + 2 / 3, 1 / 3)
             ];
         }
 
@@ -113,7 +212,7 @@ var Snake = (function () {
             let current = 0;
             for (let y = 0; y < Game.SIZE; y++) {
                 for (let x = 0; x < Game.SIZE; x++) {
-                    if (!this.game.snake.body.find(square => square.equalsXY(x,y))) {
+                    if (!this.game.snake.body.find(square => square.equalsXY(x, y))) {
                         current++;
                         if (current >= rand) {
                             this.position.x = x;
@@ -181,6 +280,7 @@ var Snake = (function () {
                 if (newHead.equals(this.game.apple.position)) {
                     this.body.unshift(tail);
                     this.game.apple.update();
+                    this.game.score++;
                 }
             }
         }
@@ -196,20 +296,30 @@ var Snake = (function () {
 
         static get SIZE() { return 20; }
 
-        constructor(canvas, interval) {
+        constructor(canvas) {
             this.canvas = canvas;
-            this.interval = interval;
+            this.interval = GameState.Medium;
 
             this.ctx = this.canvas.getContext("2d");
             this.ctx.imageSmoothingEnabled = false;
             this.background = "#8dc100";
-            this.startMenuLabel = new CanvasLabel(this, "TAP TO START", 1);
-            this.gameOverLabel = new CanvasLabel(this, "GAME OVER", 2);
+            this.snakeLabel = new CanvasLabel(this, "SNAKE", 3, 1 / 3);
+            this.startMenuLabel = new CanvasLabel(this, "CHOOSE YOUR DIFFICULTY", 0.6, 13 / 32);
+            this.gameOverLabel = new CanvasLabel(this, "GAME OVER", 2, 1 / 2);
+            this.scoreLabel = new CanvasLabel(this, () => `YOUR SCORE: ${this.score}`, 0.8, 5 / 8);
+
+            this.difficultyButtons = [];
+            Object.keys(Difficuly).forEach((key, index) => {
+                this.difficultyButtons.push(new CanvasButton(this, key, 0.8, 15 / 32 + index / 12));
+            });
+            this.buttonIdx = 0;
+            this.difficultyButtons[this.buttonIdx].hovering = true;
 
             this.gameState = GameState.StartMenu;
         }
 
         reset() {
+            this.score = 0;
             this.snake = new Snake(
                 this,
                 Direction.None,
@@ -227,10 +337,64 @@ var Snake = (function () {
             let size = Math.min(
                 this.canvas.parentElement.clientHeight,
                 this.canvas.parentElement.clientWidth);
-            size *= 0.95;
             canvas.width = size;
             canvas.height = size;
             this.unitWidth = canvas.width / Game.SIZE;
+        }
+
+        onStartMenuInput(input) {
+
+            // handle touch and mouse input
+            if (input.clientX || input.clientY) {
+                let touch = this.getTapPos(input);
+
+                for (let i in this.difficultyButtons) {
+                    if (this.difficultyButtons[i].intersects(touch)) {
+                        this.difficultyButtons[this.buttonIdx].hovering = false;
+                        this.buttonIdx = i;
+                        this.difficultyButtons[this.buttonIdx].hovering = true;
+
+                        this.reset();
+                        this.interval = Difficuly[this.difficultyButtons[this.buttonIdx].text()];
+                        this.gameState = GameState.Playing;
+                    }
+                }
+            }
+
+            // handle keyboard input
+            if (input.keyCode) {
+                if (input.keyCode === Keys.Enter) {
+                    this.reset();
+                    this.interval = Difficuly[this.difficultyButtons[this.buttonIdx].text()];
+                    this.gameState = GameState.Playing;
+                } else {
+                    let idxOffset = 0;
+                    if (input.keyCode === Keys.LeftArrow ||
+                        input.keyCode === Keys.A ||
+                        input.keyCode === Keys.UpArrow ||
+                        input.keyCode === Keys.W) {
+                        idxOffset = -1;
+                    }
+                    else if (
+                        input.keyCode === Keys.RightArrow ||
+                        input.keyCode === Keys.D ||
+                        input.keyCode === Keys.DownArrow ||
+                        input.keyCode === Keys.S) {
+                        idxOffset = 1;
+                    }
+
+                    this.difficultyButtons[this.buttonIdx].hovering = false;
+
+                    this.buttonIdx += idxOffset;
+                    if (this.buttonIdx >= this.difficultyButtons.length) {
+                        this.buttonIdx = 0;
+                    } else if (this.buttonIdx < 0) {
+                        this.buttonIdx = this.difficultyButtons.length - 1;
+                    }
+
+                    this.difficultyButtons[this.buttonIdx].hovering = true;
+                }
+            }
         }
 
         onPlayingInput(input) {
@@ -289,8 +453,7 @@ var Snake = (function () {
         oninput(input) {
             switch (this.gameState) {
                 case GameState.StartMenu:
-                    this.reset();
-                    this.gameState = GameState.Playing
+                    this.onStartMenuInput(input);
                     break;
                 case GameState.Instructions:
                     break;
@@ -321,16 +484,22 @@ var Snake = (function () {
             var timeSinceLastFrame = 0;
 
             let animationCallback = () => {
-                let now = Date.now();
-                let elapsed = now - then;
-                then = now;
+                if (this.gameState === GameState.Playing) {
 
-                timeSinceLastFrame += elapsed;
-                if (timeSinceLastFrame > this.interval) {
-                    timeSinceLastFrame -= this.interval;
+                    let now = Date.now();
+                    let elapsed = now - then;
+                    then = now;
+
+                    timeSinceLastFrame += elapsed;
                     if (timeSinceLastFrame > this.interval) {
-                        timeSinceLastFrame = this.interval;
+                        timeSinceLastFrame -= this.interval;
+                        if (timeSinceLastFrame > this.interval) {
+                            timeSinceLastFrame = this.interval;
+                        }
+                        this.update();
+                        this.draw();
                     }
+                } else {
                     this.update();
                     this.draw();
                 }
@@ -361,7 +530,10 @@ var Snake = (function () {
 
             switch (this.gameState) {
                 case GameState.StartMenu:
+                    this.snakeLabel.draw();
                     this.startMenuLabel.draw();
+                    for (let btn of this.difficultyButtons.values())
+                        btn.draw();
                     break;
                 case GameState.Instructions:
                     break;
@@ -373,19 +545,19 @@ var Snake = (function () {
                     break;
                 case GameState.GameOver:
                     this.gameOverLabel.draw();
+                    this.scoreLabel.draw();
                     break;
             }
         }
     }
 
     return {
-        Game: Game,
-        Difficuly: Difficuly
+        Game: Game
     };
 })();
 
 var canvas = document.getElementById("canvas");
-var game = new Snake.Game(canvas, Snake.Difficuly.Hard);
+var game = new Snake.Game(canvas);
 
 window.addEventListener('resize', () => game.onresize());
 window.addEventListener('keydown', e => game.oninput(e));
@@ -396,4 +568,4 @@ canvas.addEventListener('touchstart', e => {
 });
 canvas.addEventListener('mousedown', e => game.oninput(e));
 
-game.start();
+document.fonts.load('10pt "Press Start 2P"').then(() => game.start());

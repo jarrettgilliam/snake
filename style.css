@@ -1,6 +1,15 @@
 body {
-    background: black;
-    color: whitesmoke;
+    background: #444444;
+    margin: 0px;
+}
+
+div {
+    position: fixed;
+    width: 95%;
+    height: 95%;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
 }
 
 canvas {
@@ -12,17 +21,6 @@ canvas {
     bottom: 0;
     left: 0;
     right: 0;
-    border: 2px solid whitesmoke;
-}
-
-body {
-    margin: 0px;
-}
-
-#preloader {
-    font-family: 'Press Start 2P';
-    opacity:0;
-    height:0;
-    width:0;
-    display:inline-block;
+    /* border: 2px solid black; */
+    box-shadow: 0px 0px 0px 2px #000000, 0px 5px 10px 3px #222222;
 }
