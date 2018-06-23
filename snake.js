@@ -327,7 +327,6 @@ var Snake = (function () {
             Object.keys(Difficuly).forEach((key, index) => {
                 this.difficultyButtons.push(new CanvasButton(this.game, key, 0.8, 15 / 32 + index / 12));
             });
-            this.difficultyButtonIndex = 0;
         }
 
         get difficultyButtonIndex() {
@@ -337,7 +336,7 @@ var Snake = (function () {
                 }
             }
             
-            return 0;
+            return -1;
         }
 
         set difficultyButtonIndex(value) {
@@ -356,37 +355,51 @@ var Snake = (function () {
             return Difficuly[this.difficultyButtons[this.difficultyButtonIndex].text()];
         }
 
-        oninput(input) {
+        oninput(e) {
 
             // handle touch and mouse input
-            if (input.clientX || input.clientY) {
-                let touch = this.game.getTapPos(input);
+            let touch;
+            let touchstart;
 
+            if (e.type.startsWith('touch')) {
+                e.stopPropagation();
+                e.preventDefault();
+                touch = this.game.getTapPos(e.changedTouches[0]);
+                touchstart = e.type === 'touchstart';
+            } else if (e.type.startsWith('mouse')) {
+                touch = this.game.getTapPos(e);
+                touchstart = e.type === 'mousedown';
+            }
+
+            if (touch) {
                 for (let i in this.difficultyButtons) {
                     if (this.difficultyButtons[i].intersects(touch)) {
-                        this.difficultyButtonIndex = i;
-                        this.acceptSelectedDifficulty();
+                        if (touchstart) {
+                            this.difficultyButtonIndex = i;
+                        } else if (this.difficultyButtonIndex == i) {
+                            this.acceptSelectedDifficulty();
+                        }
                     }
                 }
             }
 
             // handle keyboard input
-            if (input.keyCode) {
-                if (input.keyCode === Keys.Enter) {
+            if (e.keyCode) {
+                if (e.keyCode === Keys.Enter) {
                     this.acceptSelectedDifficulty();
                 } else {
                     let idxOffset = 0;
-                    if (input.keyCode === Keys.LeftArrow ||
-                        input.keyCode === Keys.A ||
-                        input.keyCode === Keys.UpArrow ||
-                        input.keyCode === Keys.W) {
+                    if (e.keyCode === Keys.LeftArrow ||
+                        e.keyCode === Keys.A ||
+                        e.keyCode === Keys.UpArrow ||
+                        e.keyCode === Keys.W) {
                         this.difficultyButtonIndex--;
                     }
                     else if (
-                        input.keyCode === Keys.RightArrow ||
-                        input.keyCode === Keys.D ||
-                        input.keyCode === Keys.DownArrow ||
-                        input.keyCode === Keys.S) {
+                        e.keyCode === Keys.RightArrow ||
+                        e.keyCode === Keys.D ||
+                        e.keyCode === Keys.DownArrow ||
+                        e.keyCode === Keys.S) {
                         this.difficultyButtonIndex++;
                     }
                 }
@@ -426,6 +439,13 @@ var Snake = (function () {
             this.scoreLabel = new CanvasLabel(this, () => `YOUR SCORE: ${this.score}`, 0.8, 5 / 8);
 
             this.gameState = GameState.StartMenu;
+
+            window.addEventListener('resize', () => game.onresize());
+            window.addEventListener('keydown', e => game.oninput(e));
+            canvas.addEventListener('touchstart', e => game.oninput(e));
+            canvas.addEventListener('touchend', e => game.oninput(e));
+            canvas.addEventListener('mousedown', e => game.oninput(e));
+            canvas.addEventListener('mouseup', e => game.oninput(e));
         }
 
         reset() {
@@ -452,12 +472,20 @@ var Snake = (function () {
             this.unitWidth = canvas.width / Game.SIZE;
         }
 
-        onPlayingInput(input) {
+        onPlayingInput(e) {
             let newDirection;
 
             // handle touch and mouse input
-            if (input.clientX || input.clientY) {
-                let touch = this.getTapPos(input);
+            let touch;
+            if (e.type === 'touchstart') {
+                e.stopPropagation();
+                e.preventDefault();
+                touch = this.getTapPos(e.changedTouches[0]);
+            } else if (e.type === 'mousedown') {
+                touch = this.getTapPos(e);
+            }
+
+            if (touch) {
                 if (touch.x > touch.y) {
                     if (touch.y <= this.canvas.width - touch.x) {
                         newDirection = Direction.Up;
@@ -474,18 +502,18 @@ var Snake = (function () {
             }
 
             // handle keyboard input
-            if (input.keyCode) {
-                if (input.keyCode === Keys.LeftArrow ||
-                    input.keyCode === Keys.A)
+            if (e.type === 'keydown') {
+                if (e.keyCode === Keys.LeftArrow ||
+                    e.keyCode === Keys.A)
                     newDirection = Direction.Left;
-                else if (input.keyCode === Keys.UpArrow ||
-                    input.keyCode === Keys.W)
+                else if (e.keyCode === Keys.UpArrow ||
+                    e.keyCode === Keys.W)
                     newDirection = Direction.Up;
-                else if (input.keyCode === Keys.RightArrow ||
-                    input.keyCode === Keys.D)
+                else if (e.keyCode === Keys.RightArrow ||
+                    e.keyCode === Keys.D)
                     newDirection = Direction.Right;
-                else if (input.keyCode === Keys.DownArrow ||
-                    input.keyCode === Keys.S)
+                else if (e.keyCode === Keys.DownArrow ||
+                    e.keyCode === Keys.S)
                     newDirection = Direction.Down;
             }
 
@@ -505,13 +533,13 @@ var Snake = (function () {
             }
         }
 
-        oninput(input) {
+        oninput(e) {
             switch (this.gameState) {
                 case GameState.StartMenu:
-                    this.startMenu.oninput(input);
+                    this.startMenu.oninput(e);
                     break;
                 case GameState.Playing:
-                    this.onPlayingInput(input);
+                    this.onPlayingInput(e);
                     break;
                 case GameState.Paused:
                     break;
@@ -522,11 +550,11 @@ var Snake = (function () {
             }
         }
 
-        getTapPos(mouseEvent) {
+        getTapPos(e) {
             let rect = this.canvas.getBoundingClientRect();
             return new Point(
-                mouseEvent.clientX - rect.left,
-                mouseEvent.clientY - rect.top
+                e.clientX - rect.left,
+                e.clientY - rect.top
             );
         }
 
@@ -604,14 +632,5 @@ var Snake = (function () {
 
 var canvas = document.getElementById("canvas");
 var game = new Snake.Game(canvas);
-
-window.addEventListener('resize', () => game.onresize());
-window.addEventListener('keydown', e => game.oninput(e));
-canvas.addEventListener('touchstart', e => {
-    game.oninput(e.changedTouches[0]);
-    e.stopPropagation();
-    e.preventDefault();
-});
-canvas.addEventListener('mousedown', e => game.oninput(e));
 
 document.fonts.load('10pt "Press Start 2P"').then(() => game.start());
