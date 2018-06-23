@@ -53,6 +53,130 @@ var Snake = (function () {
         Down: new Point(0, 1)
     });
 
+    class Square extends Point {
+
+        constructor(game, x, y, size) {
+            super(x, y);
+            this.game = game;
+            this.size = size;
+        }
+
+        draw() {
+            this.game.ctx.fillStyle = "#000000";
+            this.game.ctx.fillRect(
+                Math.ceil(this.x * this.game.unitWidth),
+                Math.ceil(this.y * this.game.unitWidth),
+                Math.ceil(this.size * this.game.unitWidth),
+                Math.ceil(this.size * this.game.unitWidth)
+            );
+        }
+    }
+
+    class Apple {
+
+        constructor(game, position) {
+            this.game = game;
+            this.position = position;
+            this.updateBody();
+        }
+
+        updateBody() {
+            this.body = [
+                new Square(this.game, this.position.x + 0 / 3, this.position.y + 1 / 3, 1 / 3),
+                new Square(this.game, this.position.x + 1 / 3, this.position.y + 0 / 3, 1 / 3),
+                new Square(this.game, this.position.x + 2 / 3, this.position.y + 1 / 3, 1 / 3),
+                new Square(this.game, this.position.x + 1 / 3, this.position.y + 2 / 3, 1 / 3)
+            ];
+        }
+
+        update() {
+            let nbrUnoccupied = Game.SIZE ** 2 - this.game.snake.body.length;
+
+            let rand = Math.floor(Math.random() * nbrUnoccupied);
+
+            let current = 0;
+            for (let y = 0; y < Game.SIZE; y++) {
+                for (let x = 0; x < Game.SIZE; x++) {
+                    if (!this.game.snake.body.find(part => part.equalsXY(x, y))) {
+                        current++;
+                        if (current >= rand) {
+                            this.position.x = x;
+                            this.position.y = y;
+                            this.updateBody();
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+
+        draw() {
+            for (let part of this.body) {
+                part.draw();
+            }
+        }
+    }
+
+    class Snake {
+
+        constructor(game, velocity, bodyPoints) {
+            this.game = game;
+
+            this.velocity = velocity;
+            this.newVelocityQueue = [];
+
+            this.body = [];
+            for (let point of bodyPoints) {
+                this.body.push(new Square(game, point.x, point.y, 1));
+            }
+        }
+
+        update() {
+            if (this.newVelocityQueue.length > 0) {
+                this.velocity = this.newVelocityQueue.shift();
+            }
+
+            if (!this.velocity.equals(Direction.None)) {
+                let head = this.body[this.body.length - 1];
+                let tail = this.body.shift();
+                let newHead = new Square(
+                    this.game,
+                    head.x + this.velocity.x,
+                    head.y + this.velocity.y,
+                    1);
+
+                if (newHead.x >= Game.SIZE ||
+                    newHead.y >= Game.SIZE ||
+                    newHead.x < 0 ||
+                    newHead.y < 0 ||
+                    this.body.find(part => part.equals(newHead))) {
+                    if (this.dying) {
+                        this.game.gameState = GameState.GameOver;
+                    } else {
+                        this.dying = true;
+                    }
+                    this.body.unshift(tail);
+                    return;
+                }
+                this.dying = false;
+
+                this.body.push(newHead);
+
+                if (newHead.equals(this.game.apple.position)) {
+                    this.body.unshift(tail);
+                    this.game.apple.update();
+                    this.game.score++;
+                }
+            }
+        }
+
+        draw() {
+            for (let part of this.body) {
+                part.draw();
+            }
+        }
+    }
+
     class CanvasLabel {
 
         constructor(game, text, sizeFactor, YFactor) {
@@ -160,13 +284,10 @@ var Snake = (function () {
         }
 
         intersects(point) {
-            if (point.x >= this.btnXPos &&
-                point.x <= this.btnXPos + this.btnWidth &&
-                point.y >= this.btnYPos &&
-                point.y <= this.btnYPos + this.btnHeight) {
-                return true;
-            }
-            return false;
+            return point.x >= this.btnXPos &&
+                   point.x <= this.btnXPos + this.btnWidth &&
+                   point.y >= this.btnYPos &&
+                   point.y <= this.btnYPos + this.btnHeight
         }
 
         drawInternal() {
@@ -187,132 +308,6 @@ var Snake = (function () {
                 this.btnHeight);
 
             super.drawInternal();
-        }
-    }
-
-    class Square extends Point {
-
-        constructor(game, x, y, size) {
-            super(x, y);
-            this.game = game;
-            this.size = size;
-        }
-
-        draw() {
-            this.game.ctx.fillStyle = "#000000";
-            this.game.ctx.fillRect(
-                Math.ceil(this.x * this.game.unitWidth),
-                Math.ceil(this.y * this.game.unitWidth),
-                Math.ceil(this.size * this.game.unitWidth),
-                Math.ceil(this.size * this.game.unitWidth)
-            );
-        }
-    }
-
-    class Apple {
-
-        constructor(game, position) {
-            this.game = game;
-            this.position = position;
-            this.updateBody();
-        }
-
-        updateBody() {
-            this.body = [
-                new Square(this.game, this.position.x + 0 / 3, this.position.y + 1 / 3, 1 / 3),
-                new Square(this.game, this.position.x + 1 / 3, this.position.y + 0 / 3, 1 / 3),
-                new Square(this.game, this.position.x + 2 / 3, this.position.y + 1 / 3, 1 / 3),
-                new Square(this.game, this.position.x + 1 / 3, this.position.y + 2 / 3, 1 / 3)
-            ];
-        }
-
-        update() {
-            let nbrUnoccupied = Game.SIZE ** 2 -
-                this.game.snake.body.length;
-
-            let rand = Math.floor(Math.random() * nbrUnoccupied);
-
-            let current = 0;
-            for (let y = 0; y < Game.SIZE; y++) {
-                for (let x = 0; x < Game.SIZE; x++) {
-                    if (!this.game.snake.body.find(square => square.equalsXY(x, y))) {
-                        current++;
-                        if (current >= rand) {
-                            this.position.x = x;
-                            this.position.y = y;
-                            this.updateBody();
-                            return;
-                        }
-                    }
-                }
-            }
-        }
-
-        draw() {
-            for (let square of this.body) {
-                square.draw();
-            }
-        }
-    }
-
-    class Snake {
-
-        constructor(game, velocity, bodyPoints) {
-            this.game = game;
-
-            this.velocity = velocity;
-            this.newVelocityQueue = [];
-
-            this.body = [];
-            for (let point of bodyPoints) {
-                this.body.push(new Square(game, point.x, point.y, 1));
-            }
-        }
-
-        update() {
-            if (this.newVelocityQueue.length > 0) {
-                this.velocity = this.newVelocityQueue.shift();
-            }
-
-
-            if (!this.velocity.equals(Direction.None)) {
-                let head = this.body[this.body.length - 1];
-                let tail = this.body.shift();
-                let newHead = new Square(
-                    this.game,
-                    head.x + this.velocity.x,
-                    head.y + this.velocity.y,
-                    1);
-
-                if (newHead.x >= Game.SIZE ||
-                    newHead.y >= Game.SIZE ||
-                    newHead.x < 0 ||
-                    newHead.y < 0 ||
-                    this.body.find(square => square.equals(newHead))) {
-                    if (this.dying) {
-                        this.game.gameState = GameState.GameOver;
-                    } else {
-                        this.dying = true;
-                    }
-                    this.body.unshift(tail);
-                    return;
-                }
-                this.dying = false;
-
-                this.body.push(newHead);
-
-                if (newHead.equals(this.game.apple.position)) {
-                    this.body.unshift(tail);
-                    this.game.apple.update();
-                    this.game.score++;
-                }
-            }
-        }
-
-        draw() {
-            for (let square of this.body) {
-                square.draw();
-            }
         }
     }
 
@@ -384,7 +379,7 @@ var Snake = (function () {
             }
 
             // handle keyboard input
-            if (e.keyCode) {
+            if (e.type === 'keydown') {
                 if (e.keyCode === Keys.Enter) {
                     this.acceptSelectedDifficulty();
                 } else {
@@ -407,9 +402,11 @@ var Snake = (function () {
         }
 
         acceptSelectedDifficulty() {
-            this.game.reset();
-            this.game.interval = this.selectedDifficulty;
-            this.game.gameState = GameState.Playing;
+            if (this.difficultyButtonIndex >= 0) {
+                this.game.reset();
+                this.game.interval = this.selectedDifficulty;
+                this.game.gameState = GameState.Playing;
+            }
         }
 
         draw() {
