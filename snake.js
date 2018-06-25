@@ -1,11 +1,35 @@
 'use strict'
 
 var Snake = (function () {
+    function getValueAsFunction(value) {
+        if (Object.getPrototypeOf(value) === Function.prototype) {
+            return value;
+        } else {
+            return () => value;
+        }
+    }
+
     class Point {
 
         constructor(x, y) {
             this.x = x;
             this.y = y;
+        }
+
+        get x() {
+            return this._x();
+        }
+
+        set x(value) {
+            this._x = getValueAsFunction(value);
+        }
+
+        get y() {
+            return this._y();
+        }
+
+        set y(value) {
+            this._y = getValueAsFunction(value);
         }
 
         equals(other) {
@@ -77,15 +101,11 @@ var Snake = (function () {
         constructor(game, position) {
             this.game = game;
             this.position = position;
-            this.updateBody();
-        }
-
-        updateBody() {
             this.body = [
-                new Square(this.game, this.position.x + 0 / 3, this.position.y + 1 / 3, 1 / 3),
-                new Square(this.game, this.position.x + 1 / 3, this.position.y + 0 / 3, 1 / 3),
-                new Square(this.game, this.position.x + 2 / 3, this.position.y + 1 / 3, 1 / 3),
-                new Square(this.game, this.position.x + 1 / 3, this.position.y + 2 / 3, 1 / 3)
+                new Square(this.game, () => this.position.x + 0 / 3, () => this.position.y + 1 / 3, 1 / 3),
+                new Square(this.game, () => this.position.x + 1 / 3, () => this.position.y + 0 / 3, 1 / 3),
+                new Square(this.game, () => this.position.x + 2 / 3, () => this.position.y + 1 / 3, 1 / 3),
+                new Square(this.game, () => this.position.x + 1 / 3, () => this.position.y + 2 / 3, 1 / 3)
             ];
         }
 
@@ -102,7 +122,6 @@ var Snake = (function () {
                         if (current >= rand) {
                             this.position.x = x;
                             this.position.y = y;
-                            this.updateBody();
                             return;
                         }
                     }
@@ -188,13 +207,7 @@ var Snake = (function () {
 
         constructor(game, text, sizeFactor, YFactor) {
             this.game = game;
-
-            if (Object.getPrototypeOf(text) === Function.prototype) {
-                this.text = text;
-            } else {
-                this.text = () => text;
-            }
-
+            this.text = getValueAsFunction(text);
             this.sizeFactor = sizeFactor;
             this.YFactor = YFactor;
         }
