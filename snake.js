@@ -124,6 +124,7 @@ var Snake = (function () {
 
             this.velocity = velocity;
             this.newVelocityQueue = [];
+            this.nextUpdateTime = 0;
 
             this.body = [];
             for (let point of bodyPoints) {
@@ -131,41 +132,47 @@ var Snake = (function () {
             }
         }
 
-        update() {
-            if (this.newVelocityQueue.length > 0) {
-                this.velocity = this.newVelocityQueue.shift();
-            }
-
-            if (!this.velocity.equals(Direction.None)) {
-                let head = this.body[this.body.length - 1];
-                let tail = this.body.shift();
-                let newHead = new Square(
-                    this.game,
-                    head.x + this.velocity.x,
-                    head.y + this.velocity.y,
-                    1);
-
-                if (newHead.x >= Game.SIZE ||
-                    newHead.y >= Game.SIZE ||
-                    newHead.x < 0 ||
-                    newHead.y < 0 ||
-                    this.body.find(part => part.equals(newHead))) {
-                    if (this.dying) {
-                        this.game.gameState = GameState.GameOver;
-                    } else {
-                        this.dying = true;
-                    }
-                    this.body.unshift(tail);
-                    return;
+        update(now) {
+            if (now >= this.nextUpdateTime) {
+                while (this.nextUpdateTime <= now) {
+                    this.nextUpdateTime += this.game.interval;
                 }
-                this.dying = false;
 
-                this.body.push(newHead);
+                if (this.newVelocityQueue.length > 0) {
+                    this.velocity = this.newVelocityQueue.shift();
+                }
 
-                if (newHead.equals(this.game.apple.position)) {
-                    this.body.unshift(tail);
-                    this.game.apple.update();
-                    this.game.score++;
+                if (!this.velocity.equals(Direction.None)) {
+                    let head = this.body[this.body.length - 1];
+                    let tail = this.body.shift();
+                    let newHead = new Square(
+                        this.game,
+                        head.x + this.velocity.x,
+                        head.y + this.velocity.y,
+                        1);
+
+                    if (newHead.x >= Game.SIZE ||
+                        newHead.y >= Game.SIZE ||
+                        newHead.x < 0 ||
+                        newHead.y < 0 ||
+                        this.body.find(part => part.equals(newHead))) {
+                        if (this.dying) {
+                            this.game.gameState = GameState.GameOver;
+                        } else {
+                            this.dying = true;
+                        }
+                        this.body.unshift(tail);
+                        return;
+                    }
+                    this.dying = false;
+
+                    this.body.push(newHead);
+
+                    if (newHead.equals(this.game.apple.position)) {
+                        this.body.unshift(tail);
+                        this.game.apple.update();
+                        this.game.score++;
+                    }
                 }
             }
         }
@@ -466,7 +473,7 @@ var Snake = (function () {
                     new CanvasLabel(game, () => `YOUR SCORE: ${game.score}`, 0.8, 20 / 32)
                 ],
                 [
-                    new CanvasButton(game, "START OVER", 0.8, 22 / 32)
+                    new CanvasButton(game, "Start_Over", 0.8, 22 / 32)
                 ]
             );
         }
@@ -612,46 +619,17 @@ var Snake = (function () {
 
         start() {
             game.onresize();
-
-            var then = Date.now();
-            var timeSinceLastFrame = 0;
-
-            let animationCallback = () => {
-                if (this.gameState === GameState.Playing) {
-
-                    let now = Date.now();
-                    let elapsed = now - then;
-                    then = now;
-
-                    timeSinceLastFrame += elapsed;
-                    if (timeSinceLastFrame > this.interval) {
-                        timeSinceLastFrame -= this.interval;
-                        if (timeSinceLastFrame > this.interval) {
-                            timeSinceLastFrame = this.interval;
-                        }
-                        this.update();
-                        this.draw();
-                    }
-                } else {
-                    this.update();
-                    this.draw();
-                }
+            let animationCallback = (now) => {
+                this.update(now);
+                this.draw();
                 requestAnimationFrame(animationCallback);
             }
             requestAnimationFrame(animationCallback);
         }
 
-        update() {
-            switch (this.gameState) {
-                case GameState.StartMenu:
-                    break;
-                case GameState.Playing:
-                    this.snake.update();
-                    break;
-                case GameState.Paused:
-                    break;
-                case GameState.GameOver:
-                    break;
+        update(now) {
+            if (this.gameState === GameState.Playing) {
+                this.snake.update(now);
             }
         }
 
