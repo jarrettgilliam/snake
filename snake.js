@@ -295,6 +295,26 @@ var Snake = (function () {
             }
         }
 
+        queueNewDirection(newDirection) {
+            let lastDirection = this.newVelocityQueue.slice(-1)[0] || this.velocity;
+
+            // Don't add the new direction if it's the same as the last
+            if (!newDirection.equals(lastDirection)) {
+                // Don't allow changing direction 180 degrees
+                if (lastDirection.x + newDirection.x !== 0 || lastDirection.y + newDirection.y !== 0) {
+                    // Don't allow queueing more than two moves
+                    if (this.newVelocityQueue.length < 2) {
+                        this.newVelocityQueue.push(newDirection);
+                    }
+                }
+            }
+        }
+
+        stop() {
+            this.newVelocityQueue.length = 0;
+            this.velocity = Direction.None;
+        }
+
         grow(position) {
             this.body.push(
                 new SnakeBodyPart(
@@ -647,8 +667,6 @@ var Snake = (function () {
         }
 
         onPlayingInput(e) {
-            let newDirection;
-
             // handle touch and mouse input
             let touch;
             if (e.type === 'touchstart') {
@@ -660,15 +678,15 @@ var Snake = (function () {
             if (touch) {
                 if (touch.x > touch.y) {
                     if (touch.y <= this.canvas.width - touch.x) {
-                        newDirection = Direction.Up;
+                        this.snake.queueNewDirection(Direction.Up);
                     } else {
-                        newDirection = Direction.Right;
+                        this.snake.queueNewDirection(Direction.Right);
                     }
                 } else {
                     if (touch.x <= this.canvas.height - touch.y) {
-                        newDirection = Direction.Left;
+                        this.snake.queueNewDirection(Direction.Left);
                     } else {
-                        newDirection = Direction.Down;
+                        this.snake.queueNewDirection(Direction.Down);
                     }
                 }
             }
@@ -677,35 +695,20 @@ var Snake = (function () {
             if (e.type === 'keydown') {
                 if (e.code === Keys.ArrowLeft ||
                     e.code === Keys.A) {
-                    newDirection = Direction.Left;
+                    this.snake.queueNewDirection(Direction.Left);
                 } else if (e.code === Keys.ArrowUp ||
                            e.code === Keys.W) {
-                    newDirection = Direction.Up;
+                    this.snake.queueNewDirection(Direction.Up);
                 } else if (e.code === Keys.ArrowRight ||
                            e.code === Keys.D) {
-                    newDirection = Direction.Right;
+                    this.snake.queueNewDirection(Direction.Right);
                 } else if (e.code === Keys.ArrowDown ||
                            e.code === Keys.S) {
-                    newDirection = Direction.Down;
-                } else if (e.code === Keys.Enter) {
-                    this.snake.newVelocityQueue.length = 0;
-                    this.snake.velocity = Direction.None;
+                    this.snake.queueNewDirection(Direction.Down);
+                } else if (e.code === Keys.Enter ||
+                           e.code === Keys.Escape) {
+                    this.snake.stop();
                     this.gameState = GameState.Paused;
-                }
-            }
-
-            if (newDirection) {
-                let lastDirection = this.snake.newVelocityQueue.slice(-1)[0] || this.snake.velocity;
-
-                // Don't add the new direction if it's the same as the last
-                if (!newDirection.equals(lastDirection)) {
-                    // Don't allow changing direction 180 degrees
-                    if (lastDirection.x + newDirection.x !== 0 || lastDirection.y + newDirection.y !== 0) {
-                        // Don't allow queueing more than two moves
-                        if (this.snake.newVelocityQueue.length < 2) {
-                            this.snake.newVelocityQueue.push(newDirection);
-                        }
-                    }
                 }
             }
         }
