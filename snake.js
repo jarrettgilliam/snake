@@ -59,15 +59,16 @@ var Snake = (function () {
     });
 
     var Keys = Object.freeze({
-        LeftArrow: 37,
-        UpArrow: 38,
-        RightArrow: 39,
-        DownArrow: 40,
-        W: 87,
-        A: 65,
-        S: 83,
-        D: 68,
-        Enter: 13
+        ArrowLeft: "ArrowLeft",
+        ArrowUp: "ArrowUp",
+        ArrowRight: "ArrowRight",
+        ArrowDown: "ArrowDown",
+        W: "KeyW",
+        A: "KeyA",
+        S: "KeyS",
+        D: "KeyD",
+        Enter: "Enter",
+        Escape: "Escape",
     });
 
     var Direction = Object.freeze({
@@ -493,8 +494,10 @@ var Snake = (function () {
             }
 
             if (touch) {
+                let found = false;
                 for (let i in this.buttons) {
                     if (this.buttons[i].intersects(touch)) {
+                        found = true;
                         if (touchstart) {
                             this.buttonIndex = i;
                         } else if (this.buttonIndex == i) {
@@ -502,25 +505,29 @@ var Snake = (function () {
                         }
                     }
                 }
+                if (!found) {
+                    this.resetButtonIndex();
+                }
             }
 
             // handle keyboard input
             if (e.type === 'keydown') {
-                if (e.keyCode === Keys.Enter) {
+                if (e.code === Keys.Escape) {
+                    this.resetButtonIndex();
+                } else if (e.code === Keys.Enter) {
                     this.acceptSelectedOption();
                 } else {
-                    let idxOffset = 0;
-                    if (e.keyCode === Keys.LeftArrow ||
-                        e.keyCode === Keys.A ||
-                        e.keyCode === Keys.UpArrow ||
-                        e.keyCode === Keys.W) {
+                    if (e.code === Keys.ArrowLeft ||
+                        e.code === Keys.A ||
+                        e.code === Keys.ArrowUp ||
+                        e.code === Keys.W) {
                         this.buttonIndex--;
                     }
                     else if (
-                        e.keyCode === Keys.RightArrow ||
-                        e.keyCode === Keys.D ||
-                        e.keyCode === Keys.DownArrow ||
-                        e.keyCode === Keys.S) {
+                        e.code === Keys.ArrowRight ||
+                        e.code === Keys.D ||
+                        e.code === Keys.ArrowDown ||
+                        e.code === Keys.S) {
                         this.buttonIndex++;
                     }
                 }
@@ -668,20 +675,21 @@ var Snake = (function () {
 
             // handle keyboard input
             if (e.type === 'keydown') {
-                if (e.keyCode === Keys.LeftArrow ||
-                    e.keyCode === Keys.A) {
+                if (e.code === Keys.ArrowLeft ||
+                    e.code === Keys.A) {
                     newDirection = Direction.Left;
-                } else if (e.keyCode === Keys.UpArrow ||
-                    e.keyCode === Keys.W) {
+                } else if (e.code === Keys.ArrowUp ||
+                           e.code === Keys.W) {
                     newDirection = Direction.Up;
-                } else if (e.keyCode === Keys.RightArrow ||
-                    e.keyCode === Keys.D) {
+                } else if (e.code === Keys.ArrowRight ||
+                           e.code === Keys.D) {
                     newDirection = Direction.Right;
-                } else if (e.keyCode === Keys.DownArrow ||
-                    e.keyCode === Keys.S) {
+                } else if (e.code === Keys.ArrowDown ||
+                           e.code === Keys.S) {
                     newDirection = Direction.Down;
-                } else if (e.keyCode === Keys.Enter) {
-                    newDirection = Direction.None;
+                } else if (e.code === Keys.Enter) {
+                    this.snake.newVelocityQueue.length = 0;
+                    this.snake.velocity = Direction.None;
                     this.gameState = GameState.Paused;
                 }
             }
