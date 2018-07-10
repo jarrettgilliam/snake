@@ -106,8 +106,8 @@ var Snake = (function () {
         draw() {
             this.game.ctx.fillStyle = "#000000";
             this.game.ctx.fillRect(
-                Math.ceil(this.x * this.game.unitWidth),
-                Math.ceil(this.y * this.game.unitWidth),
+                Math.round(this.x * this.game.unitWidth),
+                Math.round(this.y * this.game.unitWidth),
                 Math.ceil(this.width * this.game.unitWidth),
                 Math.ceil(this.height * this.game.unitWidth)
             );
@@ -161,20 +161,20 @@ var Snake = (function () {
             this.position = position;
             this.neighbor = neighbor;
 
+            this.rectangle = new Rectangle(
+                this.game,
+                () => this.position.x + this.padding,
+                () => this.position.y + this.padding,
+                () => this.naturalWidth - this.padding * 2,
+                () => this.naturalWidth - this.padding * 2);
+
             if (this.neighbor) {
-                this.rectangle = new Rectangle(
+                this.connector = new Rectangle(
                     this.game,
                     () => this.getAxisRelativePos(this.position.x, this.neighbor.position.x),
                     () => this.getAxisRelativePos(this.position.y, this.neighbor.position.y),
                     () => this.getAxisRelativeWidth(this.position.x, this.neighbor.position.x),
                     () => this.getAxisRelativeWidth(this.position.y, this.neighbor.position.y));
-            } else {
-                this.rectangle = new Rectangle(
-                    this.game,
-                    () => this.position.x + this.padding,
-                    () => this.position.y + this.padding,
-                    () => this.naturalWidth - this.padding * 2,
-                    () => this.naturalWidth - this.padding * 2);
             }
         }
 
@@ -187,16 +187,18 @@ var Snake = (function () {
         }
 
         getAxisRelativePos(axisPos, otherAxisPos) {
-            if (otherAxisPos < axisPos) {
-                return axisPos - this.padding;
-            } else {
+            if (otherAxisPos === axisPos) {
                 return axisPos + this.padding;
+            } else if (otherAxisPos < axisPos) {
+                return axisPos - this.padding;
+            } else { // otherAxisPos > axisPos
+                return axisPos + this.naturalWidth - this.padding;
             }
         }
 
         getAxisRelativeWidth(axisPos, otherAxisPos) {
             if (otherAxisPos < axisPos || otherAxisPos > axisPos) {
-                return this.naturalWidth;
+                return this.padding * 2;
             } else {
                 return this.naturalWidth - this.padding * 2;
             }
@@ -204,6 +206,9 @@ var Snake = (function () {
 
         draw() {
             this.rectangle.draw();
+            if (this.connector) {
+                this.connector.draw();
+            }
         }
     }
 
