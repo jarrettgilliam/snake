@@ -54,7 +54,8 @@ var Snake = (function () {
     var GameState = Object.freeze({
         StartMenu: 0,
         Playing: 1,
-        GameOver: 2
+        Paused: 2,
+        GameOver: 3
     });
 
     var Keys = Object.freeze({
@@ -77,12 +78,29 @@ var Snake = (function () {
         Down: new Point(0, 1)
     });
 
-    class Square extends Point {
+    class Rectangle extends Point {
 
-        constructor(game, x, y, size) {
+        constructor(game, x, y, width, height) {
             super(x, y);
             this.game = game;
-            this.size = size;
+            this.width = width;
+            this.height = height;
+        }
+
+        get width() {
+            return this._width();
+        }
+
+        set width(value) {
+            this._width = getValueAsFunction(value);
+        }
+
+        get height() {
+            return this._height();
+        }
+
+        set height(value) {
+            this._height = getValueAsFunction(value);
         }
 
         draw() {
@@ -90,22 +108,22 @@ var Snake = (function () {
             this.game.ctx.fillRect(
                 Math.ceil(this.x * this.game.unitWidth),
                 Math.ceil(this.y * this.game.unitWidth),
-                Math.ceil(this.size * this.game.unitWidth),
-                Math.ceil(this.size * this.game.unitWidth)
+                Math.ceil(this.width * this.game.unitWidth),
+                Math.ceil(this.height * this.game.unitWidth)
             );
         }
     }
 
     class Apple {
 
-        constructor(game, position) {
+        constructor(game) {
             this.game = game;
-            this.position = position;
+            this.position = new Point(14, 9);
             this.body = [
-                new Square(this.game, () => this.position.x + 0 / 3, () => this.position.y + 1 / 3, 1 / 3),
-                new Square(this.game, () => this.position.x + 1 / 3, () => this.position.y + 0 / 3, 1 / 3),
-                new Square(this.game, () => this.position.x + 2 / 3, () => this.position.y + 1 / 3, 1 / 3),
-                new Square(this.game, () => this.position.x + 1 / 3, () => this.position.y + 2 / 3, 1 / 3)
+                new Rectangle(this.game, () => this.position.x + 0 / 3, () => this.position.y + 1 / 3, 1 / 3, 1 / 3),
+                new Rectangle(this.game, () => this.position.x + 1 / 3, () => this.position.y + 0 / 3, 1 / 3, 1 / 3),
+                new Rectangle(this.game, () => this.position.x + 2 / 3, () => this.position.y + 1 / 3, 1 / 3, 1 / 3),
+                new Rectangle(this.game, () => this.position.x + 1 / 3, () => this.position.y + 2 / 3, 1 / 3, 1 / 3)
             ];
         }
 
@@ -117,7 +135,7 @@ var Snake = (function () {
             let current = 0;
             for (let y = 0; y < Game.SIZE; y++) {
                 for (let x = 0; x < Game.SIZE; x++) {
-                    if (!this.game.snake.body.find(part => part.equalsXY(x, y))) {
+                    if (!this.game.snake.body.find(part => part.position.equalsXY(x, y))) {
                         current++;
                         if (current >= rand) {
                             this.position.x = x;
@@ -136,24 +154,85 @@ var Snake = (function () {
         }
     }
 
+    class SnakeBodyPart {
+
+        constructor(game, position, neighbor) {
+            this.game = game;
+            this.position = position;
+            this.neighbor = neighbor;
+
+            if (this.neighbor) {
+                this.rectangle = new Rectangle(
+                    this.game,
+                    () => this.getAxisRelativePos(this.position.x, this.neighbor.position.x),
+                    () => this.getAxisRelativePos(this.position.y, this.neighbor.position.y),
+                    () => this.getAxisRelativeWidth(this.position.x, this.neighbor.position.x),
+                    () => this.getAxisRelativeWidth(this.position.y, this.neighbor.position.y));
+            } else {
+                this.rectangle = new Rectangle(
+                    this.game,
+                    () => this.position.x + this.padding,
+                    () => this.position.y + this.padding,
+                    () => this.naturalWidth - this.padding * 2,
+                    () => this.naturalWidth - this.padding * 2);
+            }
+        }
+
+        get padding() {
+            return 0.05;
+        }
+
+        get naturalWidth() {
+            return 1;
+        }
+
+        getAxisRelativePos(axisPos, otherAxisPos) {
+            if (otherAxisPos < axisPos) {
+                return axisPos - this.padding;
+            } else {
+                return axisPos + this.padding;
+            }
+        }
+
+        getAxisRelativeWidth(axisPos, otherAxisPos) {
+            if (otherAxisPos < axisPos || otherAxisPos > axisPos) {
+                return this.naturalWidth;
+            } else {
+                return this.naturalWidth - this.padding * 2;
+            }
+        }
+
+        draw() {
+            this.rectangle.draw();
+        }
+    }
+
     class Snake {
 
-        constructor(game, velocity, bodyPoints) {
+        constructor(game) {
             this.game = game;
 
-            this.velocity = velocity;
-            this.newVelocityQueue = [];
             this.nextUpdateTime = 0;
-
+            this.velocity = Direction.None;
+            this.newVelocityQueue = [];
             this.body = [];
-            for (let point of bodyPoints) {
-                this.body.push(new Square(game, point.x, point.y, 1));
-            }
+
+            this.grow(new Point(4, 9));
+            this.grow(new Point(3, 9));
+            this.grow(new Point(2, 9));
+        }
+
+        get head() {
+            return this.body[0];
+        }
+
+        get tail() {
+            return this.body.slice(1);
         }
 
         update(now) {
             if (now >= this.nextUpdateTime) {
-                while (this.nextUpdateTime <= now) {
+                while (now >= this.nextUpdateTime) {
                     this.nextUpdateTime += this.game.interval;
                 }
 
@@ -162,38 +241,64 @@ var Snake = (function () {
                 }
 
                 if (!this.velocity.equals(Direction.None)) {
-                    let head = this.body[this.body.length - 1];
-                    let tail = this.body.shift();
-                    let newHead = new Square(
-                        this.game,
-                        head.x + this.velocity.x,
-                        head.y + this.velocity.y,
-                        1);
+                    let oldTailPos = this.move();
 
-                    if (newHead.x >= Game.SIZE ||
-                        newHead.y >= Game.SIZE ||
-                        newHead.x < 0 ||
-                        newHead.y < 0 ||
-                        this.body.find(part => part.equals(newHead))) {
+                    if (this.head.position.x >= Game.SIZE ||
+                        this.head.position.y >= Game.SIZE ||
+                        this.head.position.x < 0 ||
+                        this.head.position.y < 0 ||
+                        this.tail.find(part => part.position.equals(this.head.position))) {
                         if (this.dying) {
                             this.game.gameState = GameState.GameOver;
                         } else {
                             this.dying = true;
                         }
-                        this.body.unshift(tail);
+                        this.moveBack(oldTailPos);
                         return;
                     }
                     this.dying = false;
 
-                    this.body.push(newHead);
-
-                    if (newHead.equals(this.game.apple.position)) {
-                        this.body.unshift(tail);
+                    if (this.head.position.equals(this.game.apple.position)) {
+                        this.grow(oldTailPos);
                         this.game.apple.update();
                         this.game.score++;
                     }
                 }
             }
+        }
+
+        move() {
+            let newPosition = new Point(
+                this.head.position.x + this.velocity.x,
+                this.head.position.y + this.velocity.y);
+
+            for (let i = 0; i < this.body.length; i++) {
+                let swap = this.body[i].position;
+                this.body[i].position = newPosition;
+                newPosition = swap;
+            }
+
+            return newPosition;
+        }
+
+        moveBack(oldPosition) {
+            for (let i = this.body.length - 1; i >= 0; i--) {
+                let swap = this.body[i].position;
+                this.body[i].position = oldPosition;
+                oldPosition = swap;
+            }
+        }
+
+        grow(position) {
+            this.body.push(
+                new SnakeBodyPart(
+                    this.game,
+                    position,
+                    this.body.length > 0
+                        ? this.body[this.body.length - 1]
+                        : undefined
+                )
+            );
         }
 
         draw() {
@@ -264,11 +369,11 @@ var Snake = (function () {
 
         constructor(game, text, sizeFactor, YFactor) {
             super(game, text, sizeFactor, YFactor)
-            this.hovering = false;
+            this.selected = false;
         }
 
         get textColor() {
-            if (this.hovering) {
+            if (this.selected) {
                 return this.game.background;
             } else {
                 return super.textColor;
@@ -314,7 +419,7 @@ var Snake = (function () {
             this.game.ctx.lineWidth = this.lineWidth;
 
             let func;
-            if (this.hovering) {
+            if (this.selected) {
                 func = this.game.ctx.fillRect;
             } else {
                 func = this.game.ctx.strokeRect;
@@ -333,16 +438,17 @@ var Snake = (function () {
 
     class MenuBase {
 
-        constructor(game, nextGameState, labels, buttons) {
+        constructor(game, nextGameState, acceptSelectedCallback) {
             this.game = game;
-            this.nextGameState = nextGameState;
-            this.labels = labels;
-            this.buttons = buttons;
+            this.nextGameState = getValueAsFunction(nextGameState);
+            this.acceptSelectedCallback = acceptSelectedCallback;
+            this.labels = [];
+            this.buttons = [];
         }
 
         get buttonIndex() {
             for (let i = 0; i < this.buttons.length; i++) {
-                if (this.buttons[i].hovering) {
+                if (this.buttons[i].selected) {
                     return i;
                 }
             }
@@ -357,13 +463,13 @@ var Snake = (function () {
             }
 
             for (let i = 0; i < this.buttons.length; i++) {
-                this.buttons[i].hovering = (i == value);
+                this.buttons[i].selected = (i == value);
             }
         }
 
         resetButtonIndex() {
             for (let i = 0; i < this.buttons.length; i++) {
-                this.buttons[i].hovering = false;
+                this.buttons[i].selected = false;
             }
         }
 
@@ -374,8 +480,6 @@ var Snake = (function () {
             let touchstart;
 
             if (e.type.startsWith('touch')) {
-                e.stopPropagation();
-                e.preventDefault();
                 touch = this.game.getTapPos(e.changedTouches[0]);
                 touchstart = e.type === 'touchstart';
             } else if (e.type.startsWith('mouse')) {
@@ -420,13 +524,9 @@ var Snake = (function () {
 
         acceptSelectedOption() {
             if (this.buttonIndex >= 0) {
-                this.acceptSelectedOptionInternal();
-                this.game.gameState = this.nextGameState;
+                this.game.gameState = this.nextGameState();
+                this.acceptSelectedCallback();
             }
-        }
-
-        acceptSelectedOptionInternal() {
-            // Intentionally empty
         }
 
         draw() {
@@ -442,57 +542,54 @@ var Snake = (function () {
     class StartMenu extends MenuBase {
 
         constructor(game) {
-            super(
-                game,
-                GameState.Playing,
-                StartMenu.getNewLabels(game),
-                StartMenu.getNewButtons(game)
-            );
-        }
+            super(game, GameState.Playing, () => this.setupGame());
 
-        get selectedDifficulty() {
-            return Difficuly[this.buttons[this.buttonIndex].text()];
-        }
+            this.labels.push(new CanvasLabel(game, "SNAKE", 3, 1 / 3));
+            this.labels.push(new CanvasLabel(game, "CHOOSE YOUR DIFFICULTY", 0.6, 13 / 32));
 
-        static getNewLabels(game) {
-            return [
-                new CanvasLabel(game, "SNAKE", 3, 1 / 3),
-                new CanvasLabel(game, "CHOOSE YOUR DIFFICULTY", 0.6, 13 / 32)
-            ];
-        }
-
-        static getNewButtons(game) {
-            let buttons = [];
             Object.keys(Difficuly).forEach((key, index) => {
-                buttons.push(new CanvasButton(game, key, 0.8, 15 / 32 + index / 12));
+                this.buttons.push(new CanvasButton(game, key, 0.8, 15 / 32 + index / 12));
             });
-            return buttons;
         }
 
-        acceptSelectedOptionInternal() {
+        setupGame() {
             this.game.reset();
-            this.game.interval = this.selectedDifficulty;
+            this.game.interval = Difficuly[this.buttons[this.buttonIndex].text()];
         }
     }
 
     class GameOverMenu extends MenuBase {
 
         constructor(game) {
-            super(
-                game,
-                GameState.StartMenu,
-                [
-                    new CanvasLabel(game, "GAME OVER", 2, 1 / 2),
-                    new CanvasLabel(game, () => `YOUR SCORE: ${game.score}`, 0.8, 20 / 32)
-                ],
-                [
-                    new CanvasButton(game, "Start_Over", 0.8, 22 / 32)
-                ]
-            );
+            super(game, GameState.StartMenu, () => this.resetButtonIndex());
+
+            this.labels.push(new CanvasLabel(game, "GAME OVER", 2, 1 / 2));
+            this.labels.push(new CanvasLabel(game, () => `YOUR SCORE: ${game.score}`, 0.8, 20 / 32));
+
+            this.buttons.push(new CanvasButton(game, "Start_Over", 0.8, 22 / 32));
+        }
+    }
+
+    class PauseMenu extends MenuBase {
+
+        constructor(game) {
+            super(game,
+                () => this.getNextGameState(),
+                () => this.resetButtonIndex());
+
+            this.labels.push(new CanvasLabel(game, "PAUSED", 2, 1 / 2));
+            this.labels.push(new CanvasLabel(game, () => `YOUR SCORE: ${game.score}`, 0.8, 20 / 32));
+
+            this.buttons.push(new CanvasButton(game, "Resume", 0.8, 22 / 32));
+            this.buttons.push(new CanvasButton(game, "Start_Over", 0.8, 22 / 32 + 1 / 12));
         }
 
-        acceptSelectedOptionInternal() {
-            this.resetButtonIndex();
+        getNextGameState() {
+            if (this.buttonIndex === 0) {
+                return GameState.Playing;
+            } else {
+                return GameState.StartMenu;
+            }
         }
     }
 
@@ -509,6 +606,7 @@ var Snake = (function () {
             this.background = "#8dc100";
 
             this.startMenu = new StartMenu(this);
+            this.pauseMenu = new PauseMenu(this);
             this.gameOverMenu = new GameOverMenu(this);
 
             this.gameState = GameState.StartMenu;
@@ -523,17 +621,8 @@ var Snake = (function () {
 
         reset() {
             this.score = 0;
-            this.snake = new Snake(
-                this,
-                Direction.None,
-                [
-                    new Point(2, 9),
-                    new Point(3, 9),
-                    new Point(4, 9)
-                ]
-            );
-
-            this.apple = new Apple(this, new Point(14, 9));
+            this.snake = new Snake(this);
+            this.apple = new Apple(this);
         }
 
         onresize() {
@@ -551,8 +640,6 @@ var Snake = (function () {
             // handle touch and mouse input
             let touch;
             if (e.type === 'touchstart') {
-                e.stopPropagation();
-                e.preventDefault();
                 touch = this.getTapPos(e.changedTouches[0]);
             } else if (e.type === 'mousedown') {
                 touch = this.getTapPos(e);
@@ -577,17 +664,21 @@ var Snake = (function () {
             // handle keyboard input
             if (e.type === 'keydown') {
                 if (e.keyCode === Keys.LeftArrow ||
-                    e.keyCode === Keys.A)
+                    e.keyCode === Keys.A) {
                     newDirection = Direction.Left;
-                else if (e.keyCode === Keys.UpArrow ||
-                    e.keyCode === Keys.W)
+                } else if (e.keyCode === Keys.UpArrow ||
+                    e.keyCode === Keys.W) {
                     newDirection = Direction.Up;
-                else if (e.keyCode === Keys.RightArrow ||
-                    e.keyCode === Keys.D)
+                } else if (e.keyCode === Keys.RightArrow ||
+                    e.keyCode === Keys.D) {
                     newDirection = Direction.Right;
-                else if (e.keyCode === Keys.DownArrow ||
-                    e.keyCode === Keys.S)
+                } else if (e.keyCode === Keys.DownArrow ||
+                    e.keyCode === Keys.S) {
                     newDirection = Direction.Down;
+                } else if (e.keyCode === Keys.Enter) {
+                    newDirection = Direction.None;
+                    this.gameState = GameState.Paused;
+                }
             }
 
             if (newDirection) {
@@ -607,6 +698,10 @@ var Snake = (function () {
         }
 
         oninput(e) {
+            if (e.type.startsWith('touch')) {
+                e.stopPropagation();
+                e.preventDefault();
+            }
             switch (this.gameState) {
                 case GameState.StartMenu:
                     this.startMenu.oninput(e);
@@ -615,6 +710,7 @@ var Snake = (function () {
                     this.onPlayingInput(e);
                     break;
                 case GameState.Paused:
+                    this.pauseMenu.oninput(e);
                     break;
                 case GameState.GameOver:
                     this.gameOverMenu.oninput(e);
@@ -659,6 +755,7 @@ var Snake = (function () {
                     this.apple.draw();
                     break;
                 case GameState.Paused:
+                    this.pauseMenu.draw();
                     break;
                 case GameState.GameOver:
                     this.gameOverMenu.draw();
