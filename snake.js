@@ -32,6 +32,13 @@ var Snake = (function () {
             this._y = getValueAsFunction(value);
         }
 
+        minus(other) {
+            return new Point(
+                this.x - other.x,
+                this.y - other.y
+            );
+        }
+
         equals(other) {
             if (!other) return false;
             return this.equalsXY(other.x, other.y);
@@ -300,6 +307,11 @@ var Snake = (function () {
 
             // Don't add the new direction if it's the same as the last
             if (!newDirection.equals(lastDirection)) {
+                
+                if (lastDirection.equals(Direction.None)) {
+                    lastDirection = this.head.position.minus(this.tail[0].position);
+                }
+
                 // Don't allow changing direction 180 degrees
                 if (lastDirection.x + newDirection.x !== 0 || lastDirection.y + newDirection.y !== 0) {
                     // Don't allow queueing more than two moves
