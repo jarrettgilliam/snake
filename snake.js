@@ -662,7 +662,6 @@ var Snake = (function () {
 
         constructor(canvas) {
             this.canvas = canvas;
-            this.interval = Difficulty.Medium;
 
             this.ctx = this.canvas.getContext("2d");
             this.ctx.imageSmoothingEnabled = false;
