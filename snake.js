@@ -476,12 +476,13 @@ var Snake = (function () {
 
     class MenuBase {
 
-        constructor(game, nextGameState, acceptSelectedCallback) {
+        constructor(game, nextGameState, acceptSelectedCallback, labels, buttons) {
             this.game = game;
             this.nextGameState = getValueAsFunction(nextGameState);
             this.acceptSelectedCallback = acceptSelectedCallback;
-            this.labels = [];
-            this.buttons = [];
+            this.labels = labels;
+            this.buttons = buttons;
+            this.resetButtonIndex();
         }
 
         get buttonIndex() {
@@ -501,13 +502,17 @@ var Snake = (function () {
             }
 
             for (let i = 0; i < this.buttons.length; i++) {
-                this.buttons[i].selected = (i == value);
+                this.buttons[i].selected = (i === value);
             }
+        }
+
+        get defaultButtonIndex() {
+            return 0;
         }
 
         resetButtonIndex() {
             for (let i = 0; i < this.buttons.length; i++) {
-                this.buttons[i].selected = false;
+                this.buttons[i].selected = i === this.defaultButtonIndex;
             }
         }
 
@@ -527,14 +532,15 @@ var Snake = (function () {
 
             if (touch) {
                 let found = false;
-                for (let i in this.buttons) {
+                for (let i = 0; i < this.buttons.length; i++) {
                     if (this.buttons[i].intersects(touch)) {
                         found = true;
                         if (touchstart) {
                             this.buttonIndex = i;
-                        } else if (this.buttonIndex == i) {
+                        } else if (this.buttonIndex === i) {
                             this.acceptSelectedOption();
                         }
+                        break;
                     }
                 }
                 if (!found) {
@@ -586,14 +592,21 @@ var Snake = (function () {
     class StartMenu extends MenuBase {
 
         constructor(game) {
-            super(game, GameState.Playing, () => this.setupGame());
-
-            this.labels.push(new CanvasLabel(game, "SNAKE", 3, 1 / 3));
-            this.labels.push(new CanvasLabel(game, "CHOOSE YOUR DIFFICULTY", 0.6, 13 / 32));
-
+            let labels = [
+                new CanvasLabel(game, "SNAKE", 3, 1 / 3), 
+                new CanvasLabel(game, "CHOOSE YOUR DIFFICULTY", 0.6, 13 / 32)
+            ];
+            
+            let buttons = [];
             Object.keys(Difficuly).forEach((key, index) => {
-                this.buttons.push(new CanvasButton(game, key, 0.8, 15 / 32 + index / 12));
+                buttons.push(new CanvasButton(game, key, 0.8, 15 / 32 + index / 12));
             });
+
+            super(game, GameState.Playing, () => this.setupGame(), labels, buttons);
+        }
+
+        get defaultButtonIndex() {
+            return this.buttons.findIndex(b => b.text() === "Medium");
         }
 
         setupGame() {
@@ -605,27 +618,29 @@ var Snake = (function () {
     class GameOverMenu extends MenuBase {
 
         constructor(game) {
-            super(game, GameState.StartMenu, () => this.resetButtonIndex());
-
-            this.labels.push(new CanvasLabel(game, "GAME OVER", 2, 1 / 2));
-            this.labels.push(new CanvasLabel(game, () => `YOUR SCORE: ${game.score}`, 0.8, 20 / 32));
-
-            this.buttons.push(new CanvasButton(game, "Start_Over", 0.8, 22 / 32));
+            super(game, GameState.StartMenu, () => this.resetButtonIndex(), 
+            [
+                new CanvasLabel(game, "GAME OVER", 2, 1 / 2),
+                new CanvasLabel(game, () => `YOUR SCORE: ${game.score}`, 0.8, 20 / 32)
+            ],
+            [
+                new CanvasButton(game, "Start_Over", 0.8, 22 / 32)
+            ]);
         }
     }
 
     class PauseMenu extends MenuBase {
 
         constructor(game) {
-            super(game,
-                () => this.getNextGameState(),
-                () => this.resetButtonIndex());
-
-            this.labels.push(new CanvasLabel(game, "PAUSED", 2, 1 / 2));
-            this.labels.push(new CanvasLabel(game, () => `YOUR SCORE: ${game.score}`, 0.8, 20 / 32));
-
-            this.buttons.push(new CanvasButton(game, "Resume", 0.8, 22 / 32));
-            this.buttons.push(new CanvasButton(game, "Start_Over", 0.8, 22 / 32 + 1 / 12));
+            super(game, () => this.getNextGameState(), () => this.resetButtonIndex(), 
+            [
+                new CanvasLabel(game, "PAUSED", 2, 1 / 2),
+                new CanvasLabel(game, () => `YOUR SCORE: ${game.score}`, 0.8, 20 / 32)
+            ],
+            [
+                new CanvasButton(game, "Resume", 0.8, 22 / 32),
+                new CanvasButton(game, "Start_Over", 0.8, 22 / 32 + 1 / 12)
+            ]);
         }
 
         getNextGameState() {
