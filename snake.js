@@ -49,7 +49,7 @@ var Snake = (function () {
         }
     }
 
-    var Difficuly = Object.freeze({
+    var Difficulty = Object.freeze({
         Placebo: 2000,
         Very_Easy: 800,
         Easy: 400,
@@ -602,7 +602,7 @@ var Snake = (function () {
             ];
             
             let buttons = [];
-            Object.keys(Difficuly).forEach((key, index) => {
+            Object.keys(Difficulty).forEach((key, index) => {
                 buttons.push(new CanvasButton(game, key, 0.8, 15 / 32 + index / 12));
             });
 
@@ -615,7 +615,7 @@ var Snake = (function () {
 
         setupGame() {
             this.game.reset();
-            this.game.interval = Difficuly[this.buttons[this.buttonIndex].text()];
+            this.game.interval = Difficulty[this.buttons[this.buttonIndex].text()];
         }
     }
 
@@ -662,7 +662,7 @@ var Snake = (function () {
 
         constructor(canvas) {
             this.canvas = canvas;
-            this.interval = Difficuly.Medium;
+            this.interval = Difficulty.Medium;
 
             this.ctx = this.canvas.getContext("2d");
             this.ctx.imageSmoothingEnabled = false;
