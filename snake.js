@@ -511,8 +511,12 @@ var Snake = (function () {
         }
 
         resetButtonIndex() {
+            this.buttonIndex = this.defaultButtonIndex;
+        }
+
+        clearButtonIndex() {
             for (let i = 0; i < this.buttons.length; i++) {
-                this.buttons[i].selected = i === this.defaultButtonIndex;
+                this.buttons[i].selected = false;
             }
         }
 
@@ -544,14 +548,14 @@ var Snake = (function () {
                     }
                 }
                 if (!found) {
-                    this.resetButtonIndex();
+                    this.clearButtonIndex();
                 }
             }
 
             // handle keyboard input
             if (e.type === 'keydown') {
                 if (e.code === Keys.Escape) {
-                    this.resetButtonIndex();
+                    this.clearButtonIndex();
                 } else if (e.code === Keys.Enter) {
                     this.acceptSelectedOption();
                 } else {
