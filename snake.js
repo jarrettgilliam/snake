@@ -47,6 +47,10 @@ var Snake = (function () {
         equalsXY(x, y) {
             return this.x === x && this.y === y;
         }
+
+        distanceFromXY(x, y) {
+            return Math.sqrt((x - this.x) ** 2 + (y - this.y) ** 2);
+        }
     }
 
     var Difficulty = Object.freeze({
@@ -302,12 +306,12 @@ var Snake = (function () {
             }
         }
 
-        queueNewDirection(newDirection) {
+        tryQueueNewDirection(newDirection) {
             let lastDirection = this.newVelocityQueue.slice(-1)[0] || this.velocity;
 
             // Don't add the new direction if it's the same as the last
             if (!newDirection.equals(lastDirection)) {
-                
+
                 if (lastDirection.equals(Direction.None)) {
                     lastDirection = this.head.position.minus(this.tail[0].position);
                 }
@@ -317,9 +321,12 @@ var Snake = (function () {
                     // Don't allow queueing more than two moves
                     if (this.newVelocityQueue.length < 2) {
                         this.newVelocityQueue.push(newDirection);
+                        return true;
                     }
                 }
             }
+
+            return false;
         }
 
         stop() {
@@ -597,10 +604,10 @@ var Snake = (function () {
 
         constructor(game) {
             let labels = [
-                new CanvasLabel(game, "SNAKE", 3, 1 / 3), 
+                new CanvasLabel(game, "SNAKE", 3, 1 / 3),
                 new CanvasLabel(game, "CHOOSE YOUR DIFFICULTY", 0.6, 13 / 32)
             ];
-            
+
             let buttons = [];
             Object.keys(Difficulty).forEach((key, index) => {
                 buttons.push(new CanvasButton(game, key, 0.8, 15 / 32 + index / 12));
@@ -622,29 +629,29 @@ var Snake = (function () {
     class GameOverMenu extends MenuBase {
 
         constructor(game) {
-            super(game, GameState.StartMenu, () => this.resetButtonIndex(), 
-            [
-                new CanvasLabel(game, "GAME OVER", 2, 1 / 2),
-                new CanvasLabel(game, () => `YOUR SCORE: ${game.score}`, 0.8, 20 / 32)
-            ],
-            [
-                new CanvasButton(game, "Start_Over", 0.8, 22 / 32)
-            ]);
+            super(game, GameState.StartMenu, () => this.resetButtonIndex(),
+                [
+                    new CanvasLabel(game, "GAME OVER", 2, 1 / 2),
+                    new CanvasLabel(game, () => `YOUR SCORE: ${game.score}`, 0.8, 20 / 32)
+                ],
+                [
+                    new CanvasButton(game, "Start_Over", 0.8, 22 / 32)
+                ]);
         }
     }
 
     class PauseMenu extends MenuBase {
 
         constructor(game) {
-            super(game, () => this.getNextGameState(), () => this.resetButtonIndex(), 
-            [
-                new CanvasLabel(game, "PAUSED", 2, 1 / 2),
-                new CanvasLabel(game, () => `YOUR SCORE: ${game.score}`, 0.8, 20 / 32)
-            ],
-            [
-                new CanvasButton(game, "Resume", 0.8, 22 / 32),
-                new CanvasButton(game, "Start_Over", 0.8, 22 / 32 + 1 / 12)
-            ]);
+            super(game, () => this.getNextGameState(), () => this.resetButtonIndex(),
+                [
+                    new CanvasLabel(game, "PAUSED", 2, 1 / 2),
+                    new CanvasLabel(game, () => `YOUR SCORE: ${game.score}`, 0.8, 20 / 32)
+                ],
+                [
+                    new CanvasButton(game, "Resume", 0.8, 22 / 32),
+                    new CanvasButton(game, "Start_Over", 0.8, 22 / 32 + 1 / 12)
+                ]);
         }
 
         getNextGameState() {
@@ -706,17 +713,28 @@ var Snake = (function () {
             }
 
             if (touch) {
-                if (touch.x > touch.y) {
-                    if (touch.y <= this.canvas.width - touch.x) {
-                        this.snake.queueNewDirection(Direction.Up);
-                    } else {
-                        this.snake.queueNewDirection(Direction.Right);
-                    }
-                } else {
-                    if (touch.x <= this.canvas.height - touch.y) {
-                        this.snake.queueNewDirection(Direction.Left);
-                    } else {
-                        this.snake.queueNewDirection(Direction.Down);
+                let directionDistancesFromTouch = Object.values(Direction)
+                    .filter(d => !d.equals(Direction.None))
+                    .map(d => {
+                        return {
+                            direction: d,
+                            distance: touch.distanceFromXY(
+                                (d.x + this.snake.head.position.x + 0.5) * this.unitWidth,
+                                (d.y + this.snake.head.position.y + 0.5) * this.unitWidth)
+                        };
+                    });
+
+                directionDistancesFromTouch.sort((a, b) => {
+                    if (a.distance < b.distance)
+                        return -1;
+                    if (a.distance > b.distance)
+                        return 1;
+                    return 0;
+                });
+
+                for (let d of directionDistancesFromTouch) {
+                    if (this.snake.tryQueueNewDirection(d.direction)) {
+                        break;
                     }
                 }
             }
@@ -725,18 +743,18 @@ var Snake = (function () {
             if (e.type === 'keydown') {
                 if (e.code === Keys.ArrowLeft ||
                     e.code === Keys.A) {
-                    this.snake.queueNewDirection(Direction.Left);
+                    this.snake.tryQueueNewDirection(Direction.Left);
                 } else if (e.code === Keys.ArrowUp ||
-                           e.code === Keys.W) {
-                    this.snake.queueNewDirection(Direction.Up);
+                    e.code === Keys.W) {
+                    this.snake.tryQueueNewDirection(Direction.Up);
                 } else if (e.code === Keys.ArrowRight ||
-                           e.code === Keys.D) {
-                    this.snake.queueNewDirection(Direction.Right);
+                    e.code === Keys.D) {
+                    this.snake.tryQueueNewDirection(Direction.Right);
                 } else if (e.code === Keys.ArrowDown ||
-                           e.code === Keys.S) {
-                    this.snake.queueNewDirection(Direction.Down);
+                    e.code === Keys.S) {
+                    this.snake.tryQueueNewDirection(Direction.Down);
                 } else if (e.code === Keys.Enter ||
-                           e.code === Keys.Escape) {
+                    e.code === Keys.Escape) {
                     this.snake.stop();
                     this.gameState = GameState.Paused;
                 }
