@@ -666,6 +666,7 @@ var Snake = (function () {
     class Game {
 
         static get SIZE() { return 20; }
+        static get TWO_FINGER_TAP_LIMIT() { return 15; }
 
         constructor(canvas) {
             this.canvas = canvas;
@@ -686,10 +687,12 @@ var Snake = (function () {
             canvas.addEventListener('touchend', e => game.oninput(e));
             canvas.addEventListener('mousedown', e => game.oninput(e));
             canvas.addEventListener('mouseup', e => game.oninput(e));
+            canvas.addEventListener('blur', e => game.oninput(e));
         }
 
         reset() {
             this.score = 0;
+            this.lastTouchTime = 0;
             this.snake = new Snake(this);
             this.apple = new Apple(this);
         }
@@ -704,6 +707,12 @@ var Snake = (function () {
         }
 
         onPlayingInput(e) {
+            // pause when the canvas loses focus
+            if (e.type === 'blur') {
+                this.pause();
+                return;
+            }
+
             // handle touch and mouse input
             let touch;
             if (e.type === 'touchstart') {
@@ -713,6 +722,14 @@ var Snake = (function () {
             }
 
             if (touch) {
+                // pause on two finger taps
+                let now = performance.now();
+                if (now - this.lastTouchTime <= Game.TWO_FINGER_TAP_LIMIT) {
+                    this.pause();
+                    return;
+                }
+                this.lastTouchTime = now;
+
                 let directionDistancesFromTouch = Object.values(Direction)
                     .filter(d => !d.equals(Direction.None))
                     .map(d => {
@@ -755,8 +772,7 @@ var Snake = (function () {
                     this.snake.tryQueueNewDirection(Direction.Down);
                 } else if (e.code === Keys.Enter ||
                     e.code === Keys.Escape) {
-                    this.snake.stop();
-                    this.gameState = GameState.Paused;
+                    this.pause();
                 }
             }
         }
@@ -765,6 +781,9 @@ var Snake = (function () {
             if (e.type.startsWith('touch')) {
                 e.stopPropagation();
                 e.preventDefault();
+            }
+            if (e.type !== 'blur' && e.type !== 'resize') {
+                this.canvas.focus();
             }
             switch (this.gameState) {
                 case GameState.StartMenu:
@@ -780,6 +799,11 @@ var Snake = (function () {
                     this.gameOverMenu.oninput(e);
                     break;
             }
+        }
+
+        pause() {
+            this.snake.stop();
+            this.gameState = GameState.Paused;
         }
 
         getTapPos(e) {
