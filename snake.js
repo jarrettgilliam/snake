@@ -652,8 +652,9 @@ var Snake = (function () {
         constructor(game) {
             super(game, GameState.StartMenu, () => this.resetButtonIndex(),
                 [
-                    new CanvasLabel(game, "GAME OVER", 2, 1 / 2),
-                    new CanvasLabel(game, () => `YOUR SCORE: ${game.score}`, 0.8, 20 / 32)
+                    new CanvasLabel(game, "GAME OVER", 2, 7 / 16),
+                    new CanvasLabel(game, () => `DIFFICULTY: ${game.difficulty}`, 0.7, 35 / 64),
+                    new CanvasLabel(game, () => `YOUR SCORE: ${game.score}`, 0.7, 39 / 64)
                 ],
                 [
                     new CanvasButton(game, "Start_Over", 0.8, 22 / 32)
@@ -666,8 +667,9 @@ var Snake = (function () {
         constructor(game) {
             super(game, () => this.getNextGameState(), () => this.onUnpause(),
                 [
-                    new CanvasLabel(game, "PAUSED", 2, 1 / 2),
-                    new CanvasLabel(game, () => `YOUR SCORE: ${game.score}`, 0.8, 20 / 32)
+                    new CanvasLabel(game, "PAUSED", 2, 7 / 16),
+                    new CanvasLabel(game, () => `DIFFICULTY: ${game.difficulty}`, 0.7, 35 / 64),
+                    new CanvasLabel(game, () => `YOUR SCORE: ${game.score}`, 0.7, 39 / 64)
                 ],
                 [
                     new CanvasButton(game, "Resume", 0.8, 22 / 32),
@@ -719,6 +721,10 @@ var Snake = (function () {
             } else {
                 this.gameState = GameState.StartMenu;
             }
+        }
+
+        get difficulty() {
+            return Object.keys(Difficulty).find(x => Difficulty[x] === this.interval);
         }
 
         save() {
