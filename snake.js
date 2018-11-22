@@ -51,6 +51,17 @@ var Snake = (function () {
         distanceFromXY(x, y) {
             return Math.sqrt((x - this.x) ** 2 + (y - this.y) ** 2);
         }
+
+        toJSON() {
+            return {
+                x: this.x,
+                y: this.y
+            };
+        }
+
+        static fromJSON(obj) {
+            return new Point(obj.x, obj.y);
+        }
     }
 
     var Difficulty = Object.freeze({
@@ -128,9 +139,13 @@ var Snake = (function () {
 
     class Apple {
 
-        constructor(game) {
+        constructor(game, position) {
             this.game = game;
-            this.position = new Point(14, 9);
+            if (position) {
+                this.position = Point.fromJSON(position);
+            } else {
+                this.position = new Point(14, 9);
+            }
             this.body = [
                 new Rectangle(this.game, () => this.position.x + 0 / 3, () => this.position.y + 1 / 3, 1 / 3, 1 / 3),
                 new Rectangle(this.game, () => this.position.x + 1 / 3, () => this.position.y + 0 / 3, 1 / 3, 1 / 3),
@@ -226,7 +241,7 @@ var Snake = (function () {
 
     class Snake {
 
-        constructor(game) {
+        constructor(game, bodyPoints) {
             this.game = game;
 
             this.nextUpdateTime = 0;
@@ -234,9 +249,15 @@ var Snake = (function () {
             this.newVelocityQueue = [];
             this.body = [];
 
-            this.grow(new Point(4, 9));
-            this.grow(new Point(3, 9));
-            this.grow(new Point(2, 9));
+            if (bodyPoints) {
+                for (let point of bodyPoints) {
+                    this.grow(Point.fromJSON(point));
+                }
+            } else {
+                this.grow(new Point(4, 9));
+                this.grow(new Point(3, 9));
+                this.grow(new Point(2, 9));
+            }
         }
 
         get head() {
@@ -643,7 +664,7 @@ var Snake = (function () {
     class PauseMenu extends MenuBase {
 
         constructor(game) {
-            super(game, () => this.getNextGameState(), () => this.resetButtonIndex(),
+            super(game, () => this.getNextGameState(), () => this.onUnpause(),
                 [
                     new CanvasLabel(game, "PAUSED", 2, 1 / 2),
                     new CanvasLabel(game, () => `YOUR SCORE: ${game.score}`, 0.8, 20 / 32)
@@ -661,6 +682,11 @@ var Snake = (function () {
                 return GameState.StartMenu;
             }
         }
+
+        onUnpause() {
+            this.game.removeSave();
+            this.resetButtonIndex();
+        }
     }
 
     class Game {
@@ -668,8 +694,9 @@ var Snake = (function () {
         static get SIZE() { return 20; }
         static get TWO_FINGER_TAP_LIMIT() { return 15; }
 
-        constructor(canvas) {
+        constructor(canvas, storage) {
             this.canvas = canvas;
+            this.storage = storage;
 
             this.ctx = this.canvas.getContext("2d");
             this.ctx.imageSmoothingEnabled = false;
@@ -679,8 +706,6 @@ var Snake = (function () {
             this.pauseMenu = new PauseMenu(this);
             this.gameOverMenu = new GameOverMenu(this);
 
-            this.gameState = GameState.StartMenu;
-
             window.addEventListener('resize', () => game.onresize());
             window.addEventListener('keydown', e => game.oninput(e));
             canvas.addEventListener('touchstart', e => game.oninput(e));
@@ -688,13 +713,52 @@ var Snake = (function () {
             canvas.addEventListener('mousedown', e => game.oninput(e));
             canvas.addEventListener('mouseup', e => game.oninput(e));
             canvas.addEventListener('blur', e => game.oninput(e));
+
+            if (this.load()) {
+                this.gameState = GameState.Paused;
+            } else {
+                this.gameState = GameState.StartMenu;
+            }
         }
 
-        reset() {
-            this.score = 0;
+        save() {
+            let data = JSON.stringify({
+                score: this.score,
+                interval: this.interval,
+                apple: {
+                    position: this.apple.position
+                },
+                snake: {
+                    body: this.snake.body.map(x => x.position)
+                }
+            });
+            this.storage.setItem('snake', data);
+        }
+
+        removeSave() {
+            this.storage.removeItem('snake');
+        }
+
+        load() {
+            let found = false;
+            let data = this.storage.getItem('snake');
+
+            if (data) {
+                found = true;
+                data = JSON.parse(data);
+            }
+
+            this.reset(data);
+
+            return found;
+        }
+
+        reset(data) {
+            this.score = (data && data.score) || 0;
+            this.interval = (data && data.interval) || this.interval;
             this.lastTouchTime = 0;
-            this.snake = new Snake(this);
-            this.apple = new Apple(this);
+            this.apple = new Apple(this, data && data.apple && data.apple.position);
+            this.snake = new Snake(this, data && data.snake && data.snake.body);
         }
 
         onresize() {
@@ -804,6 +868,7 @@ var Snake = (function () {
         pause() {
             this.snake.stop();
             this.gameState = GameState.Paused;
+            this.save();
         }
 
         getTapPos(e) {
@@ -858,6 +923,6 @@ var Snake = (function () {
 })();
 
 var canvas = document.getElementById("canvas");
-var game = new Snake.Game(canvas);
+var game = new Snake.Game(canvas, window.localStorage);
 
 document.fonts.load('10pt "Press Start 2P"').then(() => game.start());
