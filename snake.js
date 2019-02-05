@@ -271,7 +271,7 @@ var Snake = (function () {
         update(now) {
             if (now >= this.nextUpdateTime) {
                 while (now >= this.nextUpdateTime) {
-                    this.nextUpdateTime += this.game.interval;
+                    this.nextUpdateTime += Difficulty[this.game.difficulty];
                 }
 
                 if (this.newVelocityQueue.length > 0) {
@@ -643,7 +643,7 @@ var Snake = (function () {
 
         setupGame() {
             this.game.reset();
-            this.game.interval = Difficulty[this.buttons[this.buttonIndex].text()];
+            this.game.difficulty = this.buttons[this.buttonIndex].text();
         }
     }
 
@@ -723,14 +723,10 @@ var Snake = (function () {
             }
         }
 
-        get difficulty() {
-            return Object.keys(Difficulty).find(x => Difficulty[x] === this.interval);
-        }
-
         save() {
             let data = JSON.stringify({
                 score: this.score,
-                interval: this.interval,
+                difficulty: this.difficulty,
                 apple: {
                     position: this.apple.position
                 },
@@ -761,7 +757,10 @@ var Snake = (function () {
 
         reset(data) {
             this.score = (data && data.score) || 0;
-            this.interval = (data && data.interval) || this.interval;
+            this.difficulty = (data && data.difficulty) || this.difficulty;
+            if (data && data.interval) {
+                this.difficulty = Object.keys(Difficulty).find(x => Difficulty[x] === data.interval)
+            }
             this.lastTouchTime = 0;
             this.apple = new Apple(this, data && data.apple && data.apple.position);
             this.snake = new Snake(this, data && data.snake && data.snake.body);
