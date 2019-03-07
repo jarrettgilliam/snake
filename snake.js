@@ -48,6 +48,11 @@ var Snake = (function () {
             return this.x === x && this.y === y;
         }
 
+        distanceFrom(other) {
+            if (!other) return NaN;
+            return this.distanceFromXY(other.x, other.y);
+        }
+
         distanceFromXY(x, y) {
             return Math.sqrt((x - this.x) ** 2 + (y - this.y) ** 2);
         }
@@ -694,7 +699,7 @@ var Snake = (function () {
     class Game {
 
         static get SIZE() { return 20; }
-        static get TWO_FINGER_TAP_LIMIT() { return 15; }
+        static get DOUBLE_TAP_PAUSE_TIME_LIMIT() { return 150; }
 
         constructor(canvas, storage) {
             this.canvas = canvas;
@@ -793,10 +798,12 @@ var Snake = (function () {
             if (touch) {
                 // pause on two finger taps
                 let now = performance.now();
-                if (now - this.lastTouchTime <= Game.TWO_FINGER_TAP_LIMIT) {
+                if (now - this.lastTouchTime <= Game.DOUBLE_TAP_PAUSE_TIME_LIMIT &&
+                    touch.distanceFrom(this.lastTouch) <= this.unitWidth) {
                     this.pause();
                     return;
                 }
+                this.lastTouch = touch;
                 this.lastTouchTime = now;
 
                 let directionDistancesFromTouch = Object.values(Direction)
@@ -827,20 +834,15 @@ var Snake = (function () {
 
             // handle keyboard input
             if (e.type === 'keydown') {
-                if (e.code === Keys.ArrowLeft ||
-                    e.code === Keys.A) {
+                if (e.code === Keys.ArrowLeft || e.code === Keys.A) {
                     this.snake.tryQueueNewDirection(Direction.Left);
-                } else if (e.code === Keys.ArrowUp ||
-                    e.code === Keys.W) {
+                } else if (e.code === Keys.ArrowUp || e.code === Keys.W) {
                     this.snake.tryQueueNewDirection(Direction.Up);
-                } else if (e.code === Keys.ArrowRight ||
-                    e.code === Keys.D) {
+                } else if (e.code === Keys.ArrowRight || e.code === Keys.D) {
                     this.snake.tryQueueNewDirection(Direction.Right);
-                } else if (e.code === Keys.ArrowDown ||
-                    e.code === Keys.S) {
+                } else if (e.code === Keys.ArrowDown || e.code === Keys.S) {
                     this.snake.tryQueueNewDirection(Direction.Down);
-                } else if (e.code === Keys.Enter ||
-                    e.code === Keys.Escape) {
+                } else if (e.code === Keys.Enter || e.code === Keys.Escape) {
                     this.pause();
                 }
             }
