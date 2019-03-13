@@ -699,7 +699,7 @@ var Snake = (function () {
     class Game {
 
         static get SIZE() { return 20; }
-        static get DOUBLE_TAP_PAUSE_TIME_LIMIT() { return 150; }
+        static get DOUBLE_TAP_PAUSE_TIME_LIMIT() { return 200; }
 
         constructor(canvas, storage) {
             this.canvas = canvas;
