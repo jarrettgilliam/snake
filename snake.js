@@ -9,6 +9,25 @@ var Snake = (function () {
         }
     }
 
+    function getCode(e) {
+        if (e.code) {
+            return e.code;
+        }
+
+        switch (e.keyCode) {
+            case 37: return Keys.ArrowLeft;
+            case 38: return Keys.ArrowUp;
+            case 39: return Keys.ArrowRight;
+            case 40: return Keys.ArrowDown;
+            case 87: return Keys.W;
+            case 65: return Keys.A;
+            case 83: return Keys.S;
+            case 68: return Keys.D;
+            case 13: return Keys.Enter;
+            case 27: return Keys.Escape;
+        }
+    }
+
     class Point {
 
         constructor(x, y) {
@@ -587,22 +606,23 @@ var Snake = (function () {
 
             // handle keyboard input
             if (e.type === 'keydown') {
-                if (e.code === Keys.Escape) {
+                var code = getCode(e);
+                if (code === Keys.Escape) {
                     this.clearButtonIndex();
-                } else if (e.code === Keys.Enter) {
+                } else if (code === Keys.Enter) {
                     this.acceptSelectedOption();
                 } else {
-                    if (e.code === Keys.ArrowLeft ||
-                        e.code === Keys.A ||
-                        e.code === Keys.ArrowUp ||
-                        e.code === Keys.W) {
+                    if (code === Keys.ArrowLeft ||
+                        code === Keys.A ||
+                        code === Keys.ArrowUp ||
+                        code === Keys.W) {
                         this.buttonIndex--;
                     }
                     else if (
-                        e.code === Keys.ArrowRight ||
-                        e.code === Keys.D ||
-                        e.code === Keys.ArrowDown ||
-                        e.code === Keys.S) {
+                        code === Keys.ArrowRight ||
+                        code === Keys.D ||
+                        code === Keys.ArrowDown ||
+                        code === Keys.S) {
                         this.buttonIndex++;
                     }
                 }
@@ -834,15 +854,16 @@ var Snake = (function () {
 
             // handle keyboard input
             if (e.type === 'keydown') {
-                if (e.code === Keys.ArrowLeft || e.code === Keys.A) {
+                var code = getCode(e);
+                if (code === Keys.ArrowLeft || code === Keys.A) {
                     this.snake.tryQueueNewDirection(Direction.Left);
-                } else if (e.code === Keys.ArrowUp || e.code === Keys.W) {
+                } else if (code === Keys.ArrowUp || code === Keys.W) {
                     this.snake.tryQueueNewDirection(Direction.Up);
-                } else if (e.code === Keys.ArrowRight || e.code === Keys.D) {
+                } else if (code === Keys.ArrowRight || code === Keys.D) {
                     this.snake.tryQueueNewDirection(Direction.Right);
-                } else if (e.code === Keys.ArrowDown || e.code === Keys.S) {
+                } else if (code === Keys.ArrowDown || code === Keys.S) {
                     this.snake.tryQueueNewDirection(Direction.Down);
-                } else if (e.code === Keys.Enter || e.code === Keys.Escape) {
+                } else if (code === Keys.Enter || code === Keys.Escape) {
                     this.pause();
                 }
             }
@@ -932,4 +953,11 @@ var Snake = (function () {
 var canvas = document.getElementById("canvas");
 var game = new Snake.Game(canvas, window.localStorage);
 
-document.fonts.load('10pt "Press Start 2P"').then(() => game.start());
+if (document.fonts && document.fonts.load)
+{
+    document.fonts.load('10pt "Press Start 2P"').then(() => game.start());
+}
+else
+{
+    game.start();
+}
