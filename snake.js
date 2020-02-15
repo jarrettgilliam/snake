@@ -713,13 +713,13 @@ var Snake = (function () {
             this.pauseMenu = new PauseMenu(this);
             this.gameOverMenu = new GameOverMenu(this);
 
-            window.addEventListener('resize', () => game.onresize());
-            window.addEventListener('keydown', e => game.oninput(e));
-            canvas.addEventListener('touchstart', e => game.oninput(e));
-            canvas.addEventListener('touchend', e => game.oninput(e));
-            canvas.addEventListener('mousedown', e => game.oninput(e));
-            canvas.addEventListener('mouseup', e => game.oninput(e));
-            canvas.addEventListener('blur', e => game.oninput(e));
+            window.addEventListener('resize', () => this.onresize());
+            window.addEventListener('keydown', e => this.oninput(e));
+            canvas.addEventListener('touchstart', e => this.oninput(e));
+            canvas.addEventListener('touchend', e => this.oninput(e));
+            canvas.addEventListener('mousedown', e => this.oninput(e));
+            canvas.addEventListener('mouseup', e => this.oninput(e));
+            canvas.addEventListener('blur', e => this.oninput(e));
 
             if (this.load()) {
                 this.gameState = GameState.Paused;
@@ -887,7 +887,7 @@ var Snake = (function () {
         }
 
         start() {
-            game.onresize();
+            this.onresize();
             let animationCallback = (now) => {
                 this.update(now);
                 this.draw();
