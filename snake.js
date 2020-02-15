@@ -1,6 +1,6 @@
 'use strict'
 
-var Snake = (function () {
+let Snake = (function () {
     function getValueAsFunction(value) {
         if (Object.getPrototypeOf(value) === Function.prototype) {
             return value;
@@ -88,7 +88,7 @@ var Snake = (function () {
         }
     }
 
-    var Difficulty = Object.freeze({
+    let Difficulty = Object.freeze({
         Placebo: 2000,
         Very_Easy: 800,
         Easy: 400,
@@ -97,14 +97,14 @@ var Snake = (function () {
         Stupid_Hard: 50
     });
 
-    var GameState = Object.freeze({
+    let GameState = Object.freeze({
         StartMenu: 0,
         Playing: 1,
         Paused: 2,
         GameOver: 3
     });
 
-    var Keys = Object.freeze({
+    let Keys = Object.freeze({
         ArrowLeft: "ArrowLeft",
         ArrowUp: "ArrowUp",
         ArrowRight: "ArrowRight",
@@ -117,7 +117,7 @@ var Snake = (function () {
         Escape: "Escape",
     });
 
-    var Direction = Object.freeze({
+    let Direction = Object.freeze({
         None: new Point(0, 0),
         Left: new Point(-1, 0),
         Up: new Point(0, -1),
@@ -606,7 +606,7 @@ var Snake = (function () {
 
             // handle keyboard input
             if (e.type === 'keydown') {
-                var code = getCode(e);
+                let code = getCode(e);
                 if (code === Keys.Escape) {
                     this.clearButtonIndex();
                 } else if (code === Keys.Enter) {
@@ -854,7 +854,7 @@ var Snake = (function () {
 
             // handle keyboard input
             if (e.type === 'keydown') {
-                var code = getCode(e);
+                let code = getCode(e);
                 if (code === Keys.ArrowLeft || code === Keys.A) {
                     this.snake.tryQueueNewDirection(Direction.Left);
                 } else if (code === Keys.ArrowUp || code === Keys.W) {
@@ -950,8 +950,8 @@ var Snake = (function () {
     };
 })();
 
-var canvas = document.getElementById("canvas");
-var game = new Snake.Game(canvas, window.localStorage);
+let canvas = document.getElementById("canvas");
+let game = new Snake.Game(canvas, window.localStorage);
 
 if (document.fonts && document.fonts.load)
 {
