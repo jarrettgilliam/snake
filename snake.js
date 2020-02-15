@@ -749,33 +749,40 @@ let Snake = (function () {
         }
 
         save() {
-            let data = JSON.stringify({
-                score: this.score,
-                difficulty: this.difficulty,
-                apple: {
-                    position: this.apple.position
-                },
-                snake: {
-                    body: this.snake.body.map(x => x.position)
-                }
-            });
-            this.storage.setItem('snake', data);
+            if (this.storage) {
+                let data = JSON.stringify({
+                    score: this.score,
+                    difficulty: this.difficulty,
+                    apple: {
+                        position: this.apple.position
+                    },
+                    snake: {
+                        body: this.snake.body.map(x => x.position)
+                    }
+                });
+                this.storage.setItem('snake', data);
+            }
         }
 
         removeSave() {
-            this.storage.removeItem('snake');
+            if (this.storage) {
+                this.storage.removeItem('snake');
+            }
         }
 
         load() {
             let found = false;
-            let data = this.storage.getItem('snake');
 
-            if (data) {
-                found = true;
-                data = JSON.parse(data);
+            if (this.storage) {
+                let data = this.storage.getItem('snake');
+
+                if (data) {
+                    found = true;
+                    data = JSON.parse(data);
+                }
+
+                this.reset(data);
             }
-
-            this.reset(data);
 
             return found;
         }
@@ -950,14 +957,20 @@ let Snake = (function () {
     };
 })();
 
-let canvas = document.getElementById("canvas");
-let game = new Snake.Game(canvas, window.localStorage);
+let localStorage;
+try {
+    localStorage = window.localStorage;
+}
+catch (err) {
+    console.log(err.message);
+}
 
-if (document.fonts && document.fonts.load)
-{
+let canvas = document.getElementById("canvas");
+let game = new Snake.Game(canvas, localStorage);
+
+if (document.fonts && document.fonts.load) {
     document.fonts.load('10pt "Press Start 2P"').then(() => game.start());
 }
-else
-{
+else {
     game.start();
 }
