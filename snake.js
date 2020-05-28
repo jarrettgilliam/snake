@@ -88,7 +88,7 @@ let Snake = (function () {
         }
     }
 
-    let Difficulty = Object.freeze({
+    const Difficulty = Object.freeze({
         Placebo: 2000,
         Very_Easy: 800,
         Easy: 400,
@@ -97,14 +97,14 @@ let Snake = (function () {
         Stupid_Hard: 50
     });
 
-    let GameState = Object.freeze({
+    const GameState = Object.freeze({
         StartMenu: 0,
         Playing: 1,
         Paused: 2,
         GameOver: 3
     });
 
-    let Keys = Object.freeze({
+    const Keys = Object.freeze({
         ArrowLeft: "ArrowLeft",
         ArrowUp: "ArrowUp",
         ArrowRight: "ArrowRight",
@@ -117,7 +117,7 @@ let Snake = (function () {
         Escape: "Escape",
     });
 
-    let Direction = Object.freeze({
+    const Direction = Object.freeze({
         None: new Point(0, 0),
         Left: new Point(-1, 0),
         Up: new Point(0, -1),
