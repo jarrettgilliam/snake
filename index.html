@@ -15,5 +15,10 @@
         <canvas id="canvas" tabindex="0"></canvas>
     </div>
     <script src="snake.js"></script>
+    <script>
+        if (navigator.serviceWorker) {
+            navigator.serviceWorker.register('/snake/sw.js', { scope: '/snake/' })
+        }
+    </script>
 </body>
 </html>
