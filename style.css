@@ -27,6 +27,6 @@ canvas, canvas:focus {
 
 .github-link {
     position: absolute;
-    bottom: 5px;
+    top: 5px;
     right: 5px;
 }
