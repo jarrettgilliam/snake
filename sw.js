@@ -3,7 +3,7 @@
 // From: https://gist.github.com/kosamari/7c5d1e8449b2fbc97d372675f16b566e
 
 var APP_PREFIX = 'Snake_'
-var VERSION = 'version_02'
+var VERSION = 'version_03'
 var CACHE_NAME = APP_PREFIX + VERSION
 var URLS = [
   '/snake/',
@@ -41,7 +41,7 @@ self.addEventListener('activate', function (e) {
       var cacheWhitelist = keyList.filter(function (key) {
         return key.indexOf(APP_PREFIX)
       })
-      
+
       // add current cache name to white list
       cacheWhitelist.push(CACHE_NAME)
 
