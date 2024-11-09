@@ -3,7 +3,7 @@
 // From: https://gist.github.com/kosamari/7c5d1e8449b2fbc97d372675f16b566e
 
 var APP_PREFIX = 'Snake_'
-var VERSION = 'version_04'
+var VERSION = 'version_05'
 var CACHE_NAME = APP_PREFIX + VERSION
 var URLS = [
   '/snake/',
