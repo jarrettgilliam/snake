@@ -771,20 +771,19 @@ const Snake = (function () {
         }
 
         load() {
-            let found = false;
-
-            if (this.storage) {
-                let data = this.storage.getItem('snake');
-
-                if (data) {
-                    found = true;
-                    data = JSON.parse(data);
-                }
-
-                this.reset(data);
+            if (!this.storage) {
+                return false;
             }
 
-            return found;
+            const data = this.storage.getItem('snake');
+
+            if (!data) {
+                return false;
+            }
+
+            this.reset(JSON.parse(data));
+
+            return true;
         }
 
         reset(data) {
