@@ -1,12 +1,20 @@
 {
+  "homepage": "https://jarrettgilliam.github.io/snake",
   "name": "snake",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite"
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist"
   },
   "devDependencies": {
-    "vite": "^5.4.10"
+    "gh-pages": "^6.2.0",
+    "typescript": "~5.6.2",
+    "vite": "^5.4.10",
+    "vite-plugin-pwa": "^0.21.0"
   }
 }

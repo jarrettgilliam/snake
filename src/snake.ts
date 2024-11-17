@@ -1,4 +1,4 @@
-'use strict'
+// @ts-nocheck
 
 const Snake = (function () {
     function getValueAsFunction(value) {
