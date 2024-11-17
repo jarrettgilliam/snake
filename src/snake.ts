@@ -1,6 +1,6 @@
-'use strict'
+// @ts-nocheck
 
-let Snake = (function () {
+const Snake = (function () {
     function getValueAsFunction(value) {
         if (Object.getPrototypeOf(value) === Function.prototype) {
             return value;
@@ -179,9 +179,9 @@ let Snake = (function () {
         }
 
         update() {
-            let nbrUnoccupied = Game.SIZE ** 2 - this.game.snake.body.length;
+            const nbrUnoccupied = Game.SIZE ** 2 - this.game.snake.body.length;
 
-            let rand = Math.floor(Math.random() * nbrUnoccupied);
+            const rand = Math.floor(Math.random() * nbrUnoccupied);
 
             let current = 0;
             for (let y = 0; y < Game.SIZE; y++) {
@@ -199,7 +199,7 @@ let Snake = (function () {
         }
 
         draw() {
-            for (let part of this.body) {
+            for (const part of this.body) {
                 part.draw();
             }
         }
@@ -274,7 +274,7 @@ let Snake = (function () {
             this.body = [];
 
             if (bodyPoints) {
-                for (let point of bodyPoints) {
+                for (const point of bodyPoints) {
                     this.grow(Point.fromJSON(point));
                 }
             } else {
@@ -303,7 +303,7 @@ let Snake = (function () {
                 }
 
                 if (!this.velocity.equals(Direction.None)) {
-                    let oldTailPos = this.move();
+                    const oldTailPos = this.move();
 
                     if (this.head.position.x >= Game.SIZE ||
                         this.head.position.y >= Game.SIZE ||
@@ -335,7 +335,7 @@ let Snake = (function () {
                 this.head.position.y + this.velocity.y);
 
             for (let i = 0; i < this.body.length; i++) {
-                let swap = this.body[i].position;
+                const swap = this.body[i].position;
                 this.body[i].position = newPosition;
                 newPosition = swap;
             }
@@ -345,7 +345,7 @@ let Snake = (function () {
 
         moveBack(oldPosition) {
             for (let i = this.body.length - 1; i >= 0; i--) {
-                let swap = this.body[i].position;
+                const swap = this.body[i].position;
                 this.body[i].position = oldPosition;
                 oldPosition = swap;
             }
@@ -392,7 +392,7 @@ let Snake = (function () {
         }
 
         draw() {
-            for (let part of this.body) {
+            for (const part of this.body) {
                 part.draw();
             }
         }
@@ -606,7 +606,7 @@ let Snake = (function () {
 
             // handle keyboard input
             if (e.type === 'keydown') {
-                let code = getCode(e);
+                const code = getCode(e);
                 if (code === Keys.Escape) {
                     this.clearButtonIndex();
                 } else if (code === Keys.Enter) {
@@ -637,10 +637,10 @@ let Snake = (function () {
         }
 
         draw() {
-            for (let label of this.labels) {
+            for (const label of this.labels) {
                 label.draw();
             }
-            for (let button of this.buttons) {
+            for (const button of this.buttons) {
                 button.draw();
             }
         }
@@ -649,12 +649,12 @@ let Snake = (function () {
     class StartMenu extends MenuBase {
 
         constructor(game) {
-            let labels = [
+            const labels = [
                 new CanvasLabel(game, "SNAKE", 3, 1 / 3),
                 new CanvasLabel(game, "CHOOSE YOUR DIFFICULTY", 0.6, 13 / 32)
             ];
 
-            let buttons = [];
+            const buttons = [];
             Object.keys(Difficulty).forEach((key, index) => {
                 buttons.push(new CanvasButton(game, key, 0.8, 15 / 32 + index / 12));
             });
@@ -750,7 +750,7 @@ let Snake = (function () {
 
         save() {
             if (this.storage) {
-                let data = JSON.stringify({
+                const data = JSON.stringify({
                     score: this.score,
                     difficulty: this.difficulty,
                     apple: {
@@ -771,20 +771,19 @@ let Snake = (function () {
         }
 
         load() {
-            let found = false;
-
-            if (this.storage) {
-                let data = this.storage.getItem('snake');
-
-                if (data) {
-                    found = true;
-                    data = JSON.parse(data);
-                }
-
-                this.reset(data);
+            if (!this.storage) {
+                return false;
             }
 
-            return found;
+            const data = this.storage.getItem('snake');
+
+            if (!data) {
+                return false;
+            }
+
+            this.reset(JSON.parse(data));
+
+            return true;
         }
 
         reset(data) {
@@ -799,7 +798,7 @@ let Snake = (function () {
         }
 
         onresize() {
-            let size = Math.min(
+            const size = Math.min(
                 this.canvas.parentElement.clientHeight,
                 this.canvas.parentElement.clientWidth);
             canvas.width = size;
@@ -823,8 +822,8 @@ let Snake = (function () {
             }
 
             if (touch) {
-                // pause on two finger taps
-                let now = performance.now();
+// pause on two finger taps
+                const now = performance.now();
                 if (now - this.lastTouchTime <= Game.DOUBLE_TAP_PAUSE_TIME_LIMIT &&
                     touch.distanceFrom(this.lastTouch) <= this.unitWidth) {
                     this.pause();
@@ -833,7 +832,7 @@ let Snake = (function () {
                 this.lastTouch = touch;
                 this.lastTouchTime = now;
 
-                let directionDistancesFromTouch = Object.values(Direction)
+                const directionDistancesFromTouch = Object.values(Direction)
                     .filter(d => !d.equals(Direction.None))
                     .map(d => {
                         return {
@@ -852,7 +851,7 @@ let Snake = (function () {
                     return 0;
                 });
 
-                for (let d of directionDistancesFromTouch) {
+                for (const d of directionDistancesFromTouch) {
                     if (this.snake.tryQueueNewDirection(d.direction)) {
                         break;
                     }
@@ -861,7 +860,7 @@ let Snake = (function () {
 
             // handle keyboard input
             if (e.type === 'keydown') {
-                let code = getCode(e);
+                const code = getCode(e);
                 if (code === Keys.ArrowLeft || code === Keys.A) {
                     this.snake.tryQueueNewDirection(Direction.Left);
                 } else if (code === Keys.ArrowUp || code === Keys.W) {
@@ -907,7 +906,7 @@ let Snake = (function () {
         }
 
         getTapPos(e) {
-            let rect = this.canvas.getBoundingClientRect();
+            const rect = this.canvas.getBoundingClientRect();
             return new Point(
                 e.clientX - rect.left,
                 e.clientY - rect.top
@@ -916,11 +915,11 @@ let Snake = (function () {
 
         start() {
             this.onresize();
-            let animationCallback = (now) => {
+            const animationCallback = (now) => {
                 this.update(now);
                 this.draw();
                 requestAnimationFrame(animationCallback);
-            }
+            };
             requestAnimationFrame(animationCallback);
         }
 
@@ -965,8 +964,8 @@ catch (err) {
     console.log(err.message);
 }
 
-let canvas = document.getElementById("canvas");
-let game = new Snake.Game(canvas, localStorage);
+const canvas = document.getElementById("canvas");
+const game = new Snake.Game(canvas, localStorage);
 
 if (document.fonts && document.fonts.load) {
     document.fonts.load('10pt "Press Start 2P"').then(() => game.start());

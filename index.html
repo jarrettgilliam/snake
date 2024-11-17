@@ -4,12 +4,12 @@
     <meta charset="utf-8">
     <title>Snake</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-    <link rel="stylesheet" type="text/css" media="screen" href="style.css" />
+    <meta name="theme-color" content="#111111">
+    <link rel="stylesheet" type="text/css" media="screen" href="src/style.css" />
     <link href="https://fonts.googleapis.com/css?family=Press+Start+2P" rel="stylesheet">
     <link rel="shortcut icon" href="favicon-512.png">
     <link rel="apple-touch-icon" href="favicon-512.png">
-    <meta name="theme-color" content="#111111">
-    <link rel="manifest" href="manifest.json">
+    <script defer type="module" src="src/snake.ts"></script>
 </head>
 <body>
     <div>
@@ -18,11 +18,5 @@
     <a href="https://github.com/jarrettgilliam/snake" class="github-link" title="View project on GitHub">
         <img src="github-mark.svg" width="20" height="20" loading="lazy" decoding="async" alt="GitHub project link">
     </a>
-    <script src="snake.js"></script>
-    <script>
-        if (navigator.serviceWorker) {
-            navigator.serviceWorker.register('/snake/sw.js', { scope: '/snake/' })
-        }
-    </script>
 </body>
 </html>
