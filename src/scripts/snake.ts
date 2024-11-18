@@ -1,404 +1,17 @@
 // @ts-nocheck
-
-const Snake = (function () {
-    function getValueAsFunction(value) {
-        if (Object.getPrototypeOf(value) === Function.prototype) {
-            return value;
-        } else {
-            return () => value;
-        }
-    }
-
-    function getCode(e) {
-        if (e.code) {
-            return e.code;
-        }
-
-        switch (e.keyCode) {
-            case 37: return Keys.ArrowLeft;
-            case 38: return Keys.ArrowUp;
-            case 39: return Keys.ArrowRight;
-            case 40: return Keys.ArrowDown;
-            case 87: return Keys.W;
-            case 65: return Keys.A;
-            case 83: return Keys.S;
-            case 68: return Keys.D;
-            case 13: return Keys.Enter;
-            case 27: return Keys.Escape;
-        }
-    }
-
-    class Point {
-
-        constructor(x, y) {
-            this.x = x;
-            this.y = y;
-        }
-
-        get x() {
-            return this._x();
-        }
-
-        set x(value) {
-            this._x = getValueAsFunction(value);
-        }
-
-        get y() {
-            return this._y();
-        }
-
-        set y(value) {
-            this._y = getValueAsFunction(value);
-        }
-
-        minus(other) {
-            return new Point(
-                this.x - other.x,
-                this.y - other.y
-            );
-        }
-
-        equals(other) {
-            if (!other) return false;
-            return this.equalsXY(other.x, other.y);
-        }
-
-        equalsXY(x, y) {
-            return this.x === x && this.y === y;
-        }
-
-        distanceFrom(other) {
-            if (!other) return NaN;
-            return this.distanceFromXY(other.x, other.y);
-        }
-
-        distanceFromXY(x, y) {
-            return Math.sqrt((x - this.x) ** 2 + (y - this.y) ** 2);
-        }
-
-        toJSON() {
-            return {
-                x: this.x,
-                y: this.y
-            };
-        }
-
-        static fromJSON(obj) {
-            return new Point(obj.x, obj.y);
-        }
-    }
-
-    const Difficulty = Object.freeze({
-        Placebo: 2000,
-        Very_Easy: 800,
-        Easy: 400,
-        Medium: 200,
-        Hard: 100,
-        Stupid_Hard: 50
-    });
-
-    const GameState = Object.freeze({
-        StartMenu: 0,
-        Playing: 1,
-        Paused: 2,
-        GameOver: 3
-    });
-
-    const Keys = Object.freeze({
-        ArrowLeft: "ArrowLeft",
-        ArrowUp: "ArrowUp",
-        ArrowRight: "ArrowRight",
-        ArrowDown: "ArrowDown",
-        W: "KeyW",
-        A: "KeyA",
-        S: "KeyS",
-        D: "KeyD",
-        Enter: "Enter",
-        Escape: "Escape",
-    });
-
-    const Direction = Object.freeze({
-        None: new Point(0, 0),
-        Left: new Point(-1, 0),
-        Up: new Point(0, -1),
-        Right: new Point(1, 0),
-        Down: new Point(0, 1)
-    });
-
-    class Rectangle extends Point {
-
-        constructor(game, x, y, width, height) {
-            super(x, y);
-            this.game = game;
-            this.width = width;
-            this.height = height;
-        }
-
-        get width() {
-            return this._width();
-        }
-
-        set width(value) {
-            this._width = getValueAsFunction(value);
-        }
-
-        get height() {
-            return this._height();
-        }
-
-        set height(value) {
-            this._height = getValueAsFunction(value);
-        }
-
-        draw() {
-            this.game.ctx.fillStyle = "#000000";
-            this.game.ctx.fillRect(
-                Math.round(this.x * this.game.unitWidth),
-                Math.round(this.y * this.game.unitWidth),
-                Math.ceil(this.width * this.game.unitWidth),
-                Math.ceil(this.height * this.game.unitWidth)
-            );
-        }
-    }
-
-    class Apple {
-
-        constructor(game, position) {
-            this.game = game;
-            if (position) {
-                this.position = Point.fromJSON(position);
-            } else {
-                this.position = new Point(14, 9);
-            }
-            this.body = [
-                new Rectangle(this.game, () => this.position.x + 0 / 3, () => this.position.y + 1 / 3, 1 / 3, 1 / 3),
-                new Rectangle(this.game, () => this.position.x + 1 / 3, () => this.position.y + 0 / 3, 1 / 3, 1 / 3),
-                new Rectangle(this.game, () => this.position.x + 2 / 3, () => this.position.y + 1 / 3, 1 / 3, 1 / 3),
-                new Rectangle(this.game, () => this.position.x + 1 / 3, () => this.position.y + 2 / 3, 1 / 3, 1 / 3)
-            ];
-        }
-
-        update() {
-            const nbrUnoccupied = Game.SIZE ** 2 - this.game.snake.body.length;
-
-            const rand = Math.floor(Math.random() * nbrUnoccupied);
-
-            let current = 0;
-            for (let y = 0; y < Game.SIZE; y++) {
-                for (let x = 0; x < Game.SIZE; x++) {
-                    if (!this.game.snake.body.find(part => part.position.equalsXY(x, y))) {
-                        current++;
-                        if (current >= rand) {
-                            this.position.x = x;
-                            this.position.y = y;
-                            return;
-                        }
-                    }
-                }
-            }
-        }
-
-        draw() {
-            for (const part of this.body) {
-                part.draw();
-            }
-        }
-    }
-
-    class SnakeBodyPart {
-
-        constructor(game, position, neighbor) {
-            this.game = game;
-            this.position = position;
-            this.neighbor = neighbor;
-
-            this.rectangle = new Rectangle(
-                this.game,
-                () => this.position.x + this.padding,
-                () => this.position.y + this.padding,
-                () => this.naturalWidth - this.padding * 2,
-                () => this.naturalWidth - this.padding * 2);
-
-            if (this.neighbor) {
-                this.connector = new Rectangle(
-                    this.game,
-                    () => this.getAxisRelativePos(this.position.x, this.neighbor.position.x),
-                    () => this.getAxisRelativePos(this.position.y, this.neighbor.position.y),
-                    () => this.getAxisRelativeWidth(this.position.x, this.neighbor.position.x),
-                    () => this.getAxisRelativeWidth(this.position.y, this.neighbor.position.y));
-            }
-        }
-
-        get padding() {
-            return 0.05;
-        }
-
-        get naturalWidth() {
-            return 1;
-        }
-
-        getAxisRelativePos(axisPos, otherAxisPos) {
-            if (otherAxisPos === axisPos) {
-                return axisPos + this.padding;
-            } else if (otherAxisPos < axisPos) {
-                return axisPos - this.padding;
-            } else { // otherAxisPos > axisPos
-                return axisPos + this.naturalWidth - this.padding;
-            }
-        }
-
-        getAxisRelativeWidth(axisPos, otherAxisPos) {
-            if (otherAxisPos < axisPos || otherAxisPos > axisPos) {
-                return this.padding * 2;
-            } else {
-                return this.naturalWidth - this.padding * 2;
-            }
-        }
-
-        draw() {
-            this.rectangle.draw();
-            if (this.connector) {
-                this.connector.draw();
-            }
-        }
-    }
-
-    class Snake {
-
-        constructor(game, bodyPoints) {
-            this.game = game;
-
-            this.nextUpdateTime = 0;
-            this.velocity = Direction.None;
-            this.newVelocityQueue = [];
-            this.body = [];
-
-            if (bodyPoints) {
-                for (const point of bodyPoints) {
-                    this.grow(Point.fromJSON(point));
-                }
-            } else {
-                this.grow(new Point(4, 9));
-                this.grow(new Point(3, 9));
-                this.grow(new Point(2, 9));
-            }
-        }
-
-        get head() {
-            return this.body[0];
-        }
-
-        get tail() {
-            return this.body.slice(1);
-        }
-
-        update(now) {
-            if (now >= this.nextUpdateTime) {
-                while (now >= this.nextUpdateTime) {
-                    this.nextUpdateTime += Difficulty[this.game.difficulty];
-                }
-
-                if (this.newVelocityQueue.length > 0) {
-                    this.velocity = this.newVelocityQueue.shift();
-                }
-
-                if (!this.velocity.equals(Direction.None)) {
-                    const oldTailPos = this.move();
-
-                    if (this.head.position.x >= Game.SIZE ||
-                        this.head.position.y >= Game.SIZE ||
-                        this.head.position.x < 0 ||
-                        this.head.position.y < 0 ||
-                        this.tail.find(part => part.position.equals(this.head.position))) {
-                        if (this.dying) {
-                            this.game.gameState = GameState.GameOver;
-                        } else {
-                            this.dying = true;
-                        }
-                        this.moveBack(oldTailPos);
-                        return;
-                    }
-                    this.dying = false;
-
-                    if (this.head.position.equals(this.game.apple.position)) {
-                        this.grow(oldTailPos);
-                        this.game.apple.update();
-                        this.game.score++;
-                    }
-                }
-            }
-        }
-
-        move() {
-            let newPosition = new Point(
-                this.head.position.x + this.velocity.x,
-                this.head.position.y + this.velocity.y);
-
-            for (let i = 0; i < this.body.length; i++) {
-                const swap = this.body[i].position;
-                this.body[i].position = newPosition;
-                newPosition = swap;
-            }
-
-            return newPosition;
-        }
-
-        moveBack(oldPosition) {
-            for (let i = this.body.length - 1; i >= 0; i--) {
-                const swap = this.body[i].position;
-                this.body[i].position = oldPosition;
-                oldPosition = swap;
-            }
-        }
-
-        tryQueueNewDirection(newDirection) {
-            let lastDirection = this.newVelocityQueue.slice(-1)[0] || this.velocity;
-
-            // Don't add the new direction if it's the same as the last
-            if (!newDirection.equals(lastDirection)) {
-
-                if (lastDirection.equals(Direction.None)) {
-                    lastDirection = this.head.position.minus(this.tail[0].position);
-                }
-
-                // Don't allow changing direction 180 degrees
-                if (lastDirection.x + newDirection.x !== 0 || lastDirection.y + newDirection.y !== 0) {
-                    // Don't allow queueing more than two moves
-                    if (this.newVelocityQueue.length < 2) {
-                        this.newVelocityQueue.push(newDirection);
-                        return true;
-                    }
-                }
-            }
-
-            return false;
-        }
-
-        stop() {
-            this.newVelocityQueue.length = 0;
-            this.velocity = Direction.None;
-        }
-
-        grow(position) {
-            this.body.push(
-                new SnakeBodyPart(
-                    this.game,
-                    position,
-                    this.body.length > 0
-                        ? this.body[this.body.length - 1]
-                        : undefined
-                )
-            );
-        }
-
-        draw() {
-            for (const part of this.body) {
-                part.draw();
-            }
-        }
-    }
-
-    class CanvasLabel {
+import { Difficulty } from './enums/difficulty.ts';
+import { GameState } from './enums/game-state.ts';
+import { Keys } from './enums/keys.ts';
+import { Point } from './primitives/point.ts';
+import { Direction } from './enums/direction.ts';
+import { getCode, getValueAsFunction } from './utils.ts';
+import { Drawable } from './interfaces/drawable.ts';
+import { Apple } from './entities/apple.ts';
+import { Snake } from './entities/snake.ts';
+import * as constants from './constants.ts';
+
+const SnakeIIFE = (function () {
+    class CanvasLabel implements Drawable {
 
         constructor(game, text, sizeFactor, YFactor) {
             this.game = game;
@@ -526,7 +139,7 @@ const Snake = (function () {
         }
     }
 
-    class MenuBase {
+    class MenuBase implements Drawable {
 
         constructor(game, nextGameState, acceptSelectedCallback, labels, buttons) {
             this.game = game;
@@ -716,10 +329,7 @@ const Snake = (function () {
         }
     }
 
-    class Game {
-
-        static get SIZE() { return 20; }
-        static get DOUBLE_TAP_PAUSE_TIME_LIMIT() { return 200; }
+    class Game implements Drawable {
 
         constructor(canvas, storage) {
             this.canvas = canvas;
@@ -803,7 +413,7 @@ const Snake = (function () {
                 this.canvas.parentElement.clientWidth);
             canvas.width = size;
             canvas.height = size;
-            this.unitWidth = canvas.width / Game.SIZE;
+            this.unitWidth = canvas.width / constants.SIZE;
         }
 
         onPlayingInput(e) {
@@ -824,7 +434,7 @@ const Snake = (function () {
             if (touch) {
 // pause on two finger taps
                 const now = performance.now();
-                if (now - this.lastTouchTime <= Game.DOUBLE_TAP_PAUSE_TIME_LIMIT &&
+                if (now - this.lastTouchTime <= constants.DOUBLE_TAP_PAUSE_TIME_LIMIT &&
                     touch.distanceFrom(this.lastTouch) <= this.unitWidth) {
                     this.pause();
                     return;
@@ -915,7 +525,7 @@ const Snake = (function () {
 
         start() {
             this.onresize();
-            const animationCallback = (now) => {
+            const animationCallback = (now: DOMHighResTimeStamp) => {
                 this.update(now);
                 this.draw();
                 requestAnimationFrame(animationCallback);
@@ -923,7 +533,7 @@ const Snake = (function () {
             requestAnimationFrame(animationCallback);
         }
 
-        update(now) {
+        update(now: DOMHighResTimeStamp) {
             if (this.gameState === GameState.Playing) {
                 this.snake.update(now);
             }
@@ -965,7 +575,7 @@ catch (err) {
 }
 
 const canvas = document.getElementById("canvas");
-const game = new Snake.Game(canvas, localStorage);
+const game = new SnakeIIFE.Game(canvas, localStorage);
 
 if (document.fonts && document.fonts.load) {
     document.fonts.load('10pt "Press Start 2P"').then(() => game.start());
