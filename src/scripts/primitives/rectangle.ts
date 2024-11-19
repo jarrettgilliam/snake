@@ -1,14 +1,15 @@
 import { Point } from './point.ts';
 import { Drawable } from '../interfaces/drawable.ts';
 import { getValueAsFunction } from '../utils.ts';
+import { Game } from '../game.ts';
 
 export class Rectangle extends Point implements Drawable {
-    private readonly game: any;
+    private readonly game: Game;
     private _width!: () => number;
     private _height!: () => number;
 
     constructor(
-        game: any,
+        game: Game,
         x: number | (() => number),
         y: number | (() => number),
         width: number | (() => number),

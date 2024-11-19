@@ -5,16 +5,17 @@ import { Direction } from '../enums/direction.ts';
 import { Point } from '../primitives/point.ts';
 import { Difficulty } from '../enums/difficulty.ts';
 import { GameState } from '../enums/game-state.ts';
+import { Game } from '../game.ts';
 
 export class Snake implements Drawable {
-    private readonly game: any;
+    private readonly game: Game;
     private nextUpdateTime: number;
     private velocity: Point;
     private newVelocityQueue: Point[];
     public readonly body: SnakeBodyPart[];
     private dying = false;
 
-    constructor(game: any, bodyPoints?: { x: number, y: number }[]) {
+    constructor(game: Game, bodyPoints?: { x: number, y: number }[]) {
         this.game = game;
 
         this.nextUpdateTime = 0;
@@ -44,8 +45,7 @@ export class Snake implements Drawable {
     update(now: DOMHighResTimeStamp) {
         if (now >= this.nextUpdateTime) {
             while (now >= this.nextUpdateTime) {
-                // @ts-ignore
-                this.nextUpdateTime += Difficulty[this.game.difficulty];
+                this.nextUpdateTime += Difficulty[this.game.difficulty as keyof typeof Difficulty];
             }
 
             this.velocity = this.newVelocityQueue.shift() || this.velocity;

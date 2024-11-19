@@ -2,14 +2,14 @@ import { Drawable } from '../interfaces/drawable.ts';
 import { Point } from '../primitives/point.ts';
 import { Rectangle } from '../primitives/rectangle.ts';
 import * as constants from '../constants.ts';
-import { Snake } from './snake.ts';
+import { Game } from '../game.ts';
 
 export class Apple implements Drawable {
-    private readonly game: { snake: Snake };
-    private position: Point;
+    private readonly game: Game;
+    position: Point;
     private readonly body: Rectangle[];
 
-    constructor(game: { snake: Snake }, position?: Point) {
+    constructor(game: Game, position?: Point) {
         this.game = game;
 
         if (position) {

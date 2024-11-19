@@ -30,3 +30,11 @@ export function getCode(e: KeyboardEvent): string | null {
 
     return null;
 }
+
+export function throwIfNull<T>(value: T | null): T {
+    if (value === null) {
+        throw new Error(`Value of type ${typeof value} is null`);
+    }
+
+    return value;
+}

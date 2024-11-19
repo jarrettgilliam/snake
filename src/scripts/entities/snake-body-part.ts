@@ -1,15 +1,16 @@
 import { Drawable } from '../interfaces/drawable.ts';
 import { Point } from '../primitives/point.ts';
 import { Rectangle } from '../primitives/rectangle.ts';
+import { Game } from '../game.ts';
 
 export class SnakeBodyPart implements Drawable {
     public position: Point;
-    private readonly game: any;
+    private readonly game: Game;
     private readonly neighbor?: SnakeBodyPart;
     private readonly rectangle: Rectangle;
     private readonly connector?: Rectangle;
 
-    constructor(game: any, position: Point, neighbor?: SnakeBodyPart) {
+    constructor(game: Game, position: Point, neighbor?: SnakeBodyPart) {
         this.game = game;
         this.position = position;
         this.neighbor = neighbor;
