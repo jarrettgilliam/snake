@@ -1,6 +1,6 @@
 import { MenuBase } from './menu-base.ts';
 import { CanvasLabel } from '../controls/canvas-label.ts';
-import { Difficulty } from '../enums/difficulty.ts';
+import { DefaultDifficulty, Difficulty } from '../enums/difficulty.ts';
 import { CanvasButton } from '../controls/canvas-button.ts';
 import { GameState } from '../enums/game-state.ts';
 import { Game } from '../game.ts';
@@ -22,11 +22,11 @@ export class StartMenu extends MenuBase {
     }
 
     get defaultButtonIndex() {
-        return this.buttons.findIndex(b => b.text() === "Medium");
+        return this.buttons.findIndex(b => b.text() === DefaultDifficulty);
     }
 
     setupGame() {
         this.game.reset();
-        this.game.difficulty = this.buttons[this.buttonIndex].text();
+        this.game.difficulty = this.buttons[this.buttonIndex].text() as Difficulty;
     }
 }

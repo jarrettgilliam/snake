@@ -10,6 +10,7 @@ import * as constants from './constants.ts';
 import { StartMenu } from './menus/start-menu.ts';
 import { PauseMenu } from './menus/pause-menu.ts';
 import { GameOverMenu } from './menus/game-over-menu.ts';
+import { DefaultDifficulty, Difficulty } from './enums/difficulty.ts';
 
 export class Game implements Drawable {
     public readonly canvas: HTMLCanvasElement;
@@ -17,7 +18,7 @@ export class Game implements Drawable {
     public readonly background: string;
     public gameState: GameState;
     public score = 0;
-    public difficulty = '';
+    public difficulty: Difficulty = DefaultDifficulty;
     public unitWidth = 0;
     public apple!: Apple;
     public snake!: Snake;

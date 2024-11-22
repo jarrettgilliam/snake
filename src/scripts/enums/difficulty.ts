@@ -6,3 +6,7 @@ export const Difficulty = {
     Hard: 100,
     Stupid_Hard: 50
 } as const;
+
+export type Difficulty = keyof typeof Difficulty;
+
+export const DefaultDifficulty = 'Medium';
