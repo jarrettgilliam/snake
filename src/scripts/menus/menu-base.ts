@@ -4,15 +4,16 @@ import { CanvasLabel } from '../controls/canvas-label.ts';
 import { CanvasButton } from '../controls/canvas-button.ts';
 import { Keys } from '../enums/keys.ts';
 import { Game } from '../game.ts';
+import { GameState } from '../enums/game-state.ts';
 
 export class MenuBase implements Drawable {
     protected readonly game: Game;
-    private readonly nextGameState: () => number;
+    private readonly nextGameState: () => GameState;
     private readonly acceptSelectedCallback: () => void;
     private readonly labels: CanvasLabel[];
     protected readonly buttons: CanvasButton[];
 
-    constructor(game: Game, nextGameState: number | (() => number), acceptSelectedCallback: () => void, labels: CanvasLabel[], buttons: CanvasButton[]) {
+    constructor(game: Game, nextGameState: GameState | (() => GameState), acceptSelectedCallback: () => void, labels: CanvasLabel[], buttons: CanvasButton[]) {
         this.game = game;
         this.nextGameState = getValueAsFunction(nextGameState);
         this.acceptSelectedCallback = acceptSelectedCallback;

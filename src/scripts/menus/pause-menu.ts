@@ -19,7 +19,7 @@ export class PauseMenu extends MenuBase {
             ]);
     }
 
-    getNextGameState() {
+    getNextGameState(): GameState {
         if (this.buttonIndex === 0) {
             return GameState.Playing;
         } else {

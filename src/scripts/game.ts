@@ -20,7 +20,7 @@ export class Game implements Drawable {
     private readonly pauseMenu: PauseMenu;
     private readonly gameOverMenu: GameOverMenu;
     readonly background: string;
-    gameState: number;
+    gameState: GameState;
     score = 0;
     difficulty = '';
     unitWidth = 0;
