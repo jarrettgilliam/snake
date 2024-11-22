@@ -60,8 +60,6 @@ export class SnakeBodyPart implements Drawable {
 
     draw() {
         this.rectangle.draw();
-        if (this.connector) {
-            this.connector.draw();
-        }
+        this.connector?.draw();
     }
 }

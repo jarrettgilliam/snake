@@ -3,8 +3,8 @@ import { getValueAsFunction } from '../utils.ts';
 import { Game } from '../game.ts';
 
 export class CanvasLabel implements Drawable {
-    protected readonly game: Game;
     public readonly text: () => string;
+    protected readonly game: Game;
     protected readonly sizeFactor: number;
     private readonly YFactor: number;
 

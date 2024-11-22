@@ -11,11 +11,7 @@ export class CanvasButton extends CanvasLabel {
     }
 
     get textColor() {
-        if (this.selected) {
-            return this.game.background;
-        } else {
-            return super.textColor;
-        }
+        return this.selected ? this.game.background : super.textColor;
     }
 
     get textBaseline(): CanvasTextBaseline {
@@ -56,12 +52,7 @@ export class CanvasButton extends CanvasLabel {
     drawInternal() {
         this.game.ctx.lineWidth = this.lineWidth;
 
-        let func;
-        if (this.selected) {
-            func = this.game.ctx.fillRect;
-        } else {
-            func = this.game.ctx.strokeRect;
-        }
+        const func = this.selected ? this.game.ctx.fillRect : this.game.ctx.strokeRect;
 
         func.call(
             this.game.ctx,

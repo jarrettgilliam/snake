@@ -20,11 +20,7 @@ export class PauseMenu extends MenuBase {
     }
 
     getNextGameState(): GameState {
-        if (this.buttonIndex === 0) {
-            return GameState.Playing;
-        } else {
-            return GameState.StartMenu;
-        }
+        return this.buttonIndex === 0 ? GameState.Playing : GameState.StartMenu;
     }
 
     onUnpause() {

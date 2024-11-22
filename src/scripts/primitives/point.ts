@@ -4,9 +4,8 @@ export class Point {
     private _x!: () => number;
     private _y!: () => number;
 
-    constructor(
-        x: number | (() => number),
-        y: number | (() => number)) {
+    constructor(x: number | (() => number),
+                y: number | (() => number)) {
         this.x = x;
         this.y = y;
     }
@@ -34,7 +33,7 @@ export class Point {
         );
     }
 
-    equals(other: Point|null|undefined): boolean {
+    equals(other?: Point): boolean {
         if (!other) return false;
         return this.equalsXY(other.x, other.y);
     }
@@ -43,7 +42,7 @@ export class Point {
         return this.x === x && this.y === y;
     }
 
-    distanceFrom(other: Point|null|undefined): number {
+    distanceFrom(other?: Point): number {
         if (!other) return NaN;
         return this.distanceFromXY(other.x, other.y);
     }

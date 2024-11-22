@@ -8,11 +8,11 @@ import { GameState } from '../enums/game-state.ts';
 import { Game } from '../game.ts';
 
 export class Snake implements Drawable {
+    public readonly body: SnakeBodyPart[];
     private readonly game: Game;
     private nextUpdateTime: number;
     private velocity: Point;
     private newVelocityQueue: Point[];
-    public readonly body: SnakeBodyPart[];
     private dying = false;
 
     constructor(game: Game, bodyPoints?: { x: number, y: number }[]) {
@@ -24,9 +24,7 @@ export class Snake implements Drawable {
         this.body = [];
 
         if (bodyPoints) {
-            for (const point of bodyPoints) {
-                this.grow(Point.fromJSON(point));
-            }
+            bodyPoints.forEach(p => this.grow(Point.fromJSON(p)));
         } else {
             this.grow(new Point(4, 9));
             this.grow(new Point(3, 9));
@@ -43,37 +41,44 @@ export class Snake implements Drawable {
     }
 
     update(now: DOMHighResTimeStamp) {
-        if (now >= this.nextUpdateTime) {
-            while (now >= this.nextUpdateTime) {
-                this.nextUpdateTime += Difficulty[this.game.difficulty as keyof typeof Difficulty];
+        if (now < this.nextUpdateTime) {
+            return;
+        }
+
+        while (now >= this.nextUpdateTime) {
+            this.nextUpdateTime += Difficulty[this.game.difficulty as keyof typeof Difficulty];
+        }
+
+        this.velocity = this.newVelocityQueue.shift() || this.velocity;
+        if (this.velocity.equals(Direction.None)) {
+            return;
+        }
+
+        const oldTailPos: Point = this.move();
+
+        if (this.head.position.x >= constants.GAME_SIZE ||
+            this.head.position.y >= constants.GAME_SIZE ||
+            this.head.position.x < 0 ||
+            this.head.position.y < 0 ||
+            this.tail.find(part => part.position.equals(this.head.position))) {
+
+            if (this.dying) {
+                this.game.gameState = GameState.GameOver;
+            } else {
+                this.dying = true;
             }
 
-            this.velocity = this.newVelocityQueue.shift() || this.velocity;
+            this.moveBack(oldTailPos);
 
-            if (!this.velocity.equals(Direction.None)) {
-                const oldTailPos: Point = this.move();
+            return;
+        }
 
-                if (this.head.position.x >= constants.SIZE ||
-                    this.head.position.y >= constants.SIZE ||
-                    this.head.position.x < 0 ||
-                    this.head.position.y < 0 ||
-                    this.tail.find(part => part.position.equals(this.head.position))) {
-                    if (this.dying) {
-                        this.game.gameState = GameState.GameOver;
-                    } else {
-                        this.dying = true;
-                    }
-                    this.moveBack(oldTailPos);
-                    return;
-                }
-                this.dying = false;
+        this.dying = false;
 
-                if (this.head.position.equals(this.game.apple.position)) {
-                    this.grow(oldTailPos);
-                    this.game.apple.update();
-                    this.game.score++;
-                }
-            }
+        if (this.head.position.equals(this.game.apple.position)) {
+            this.grow(oldTailPos);
+            this.game.apple.update();
+            this.game.score++;
         }
     }
 
@@ -83,9 +88,7 @@ export class Snake implements Drawable {
             this.head.position.y + this.velocity.y);
 
         for (let i = 0; i < this.body.length; i++) {
-            const swap = this.body[i].position;
-            this.body[i].position = newPosition;
-            newPosition = swap;
+            [newPosition, this.body[i].position] = [this.body[i].position, newPosition];
         }
 
         return newPosition;
@@ -93,9 +96,7 @@ export class Snake implements Drawable {
 
     moveBack(oldPosition: Point) {
         for (let i = this.body.length - 1; i >= 0; i--) {
-            const swap = this.body[i].position;
-            this.body[i].position = oldPosition;
-            oldPosition = swap;
+            [oldPosition, this.body[i].position] = [this.body[i].position, oldPosition];
         }
     }
 
@@ -140,8 +141,6 @@ export class Snake implements Drawable {
     }
 
     draw() {
-        for (const part of this.body) {
-            part.draw();
-        }
+        this.body.forEach(p => p.draw());
     }
 }

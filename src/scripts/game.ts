@@ -1,4 +1,3 @@
-import { Difficulty } from './enums/difficulty.ts';
 import { GameState } from './enums/game-state.ts';
 import { Keys } from './enums/keys.ts';
 import { Point } from './primitives/point.ts';
@@ -13,23 +12,23 @@ import { PauseMenu } from './menus/pause-menu.ts';
 import { GameOverMenu } from './menus/game-over-menu.ts';
 
 export class Game implements Drawable {
-    readonly canvas: HTMLCanvasElement;
-    private readonly storage: Storage | null;
-    readonly ctx: CanvasRenderingContext2D;
+    public readonly canvas: HTMLCanvasElement;
+    public readonly ctx: CanvasRenderingContext2D;
+    public readonly background: string;
+    public gameState: GameState;
+    public score = 0;
+    public difficulty = '';
+    public unitWidth = 0;
+    public apple!: Apple;
+    public snake!: Snake;
+    private readonly storage?: Storage;
     private readonly startMenu: StartMenu;
     private readonly pauseMenu: PauseMenu;
     private readonly gameOverMenu: GameOverMenu;
-    readonly background: string;
-    gameState: GameState;
-    score = 0;
-    difficulty = '';
-    unitWidth = 0;
     private lastTouchTime = 0;
-    private lastTouch: Point | null = null;
-    apple!: Apple;
-    public snake!: Snake;
+    private lastTouch?: Point;
 
-    constructor(canvas: HTMLCanvasElement, storage: Storage | null) {
+    constructor(canvas: HTMLCanvasElement, storage?: Storage) {
         this.canvas = canvas;
         this.storage = storage;
 
@@ -50,33 +49,30 @@ export class Game implements Drawable {
         canvas.addEventListener('mouseup', e => this.oninput(e));
         canvas.addEventListener('blur', e => this.oninput(e));
 
-        if (this.load()) {
-            this.gameState = GameState.Paused;
-        } else {
-            this.gameState = GameState.StartMenu;
-        }
+        this.gameState = this.load() ? GameState.Paused : GameState.StartMenu;
     }
 
     save() {
-        if (this.storage) {
-            const data = JSON.stringify({
-                score: this.score,
-                difficulty: this.difficulty,
-                apple: {
-                    position: this.apple.position
-                },
-                snake: {
-                    body: this.snake.body.map(x => x.position)
-                }
-            });
-            this.storage.setItem('snake', data);
+        if (!this.storage) {
+            return;
         }
+
+        const data = JSON.stringify({
+            score: this.score,
+            difficulty: this.difficulty,
+            apple: {
+                position: this.apple.position
+            },
+            snake: {
+                body: this.snake.body.map(x => x.position)
+            }
+        });
+
+        this.storage.setItem('snake', data);
     }
 
     removeSave() {
-        if (this.storage) {
-            this.storage.removeItem('snake');
-        }
+        this.storage?.removeItem('snake');
     }
 
     load() {
@@ -95,12 +91,9 @@ export class Game implements Drawable {
         return true;
     }
 
-    reset(data: any | null = null) {
+    reset(data?: any) {
         this.score = (data?.score) || 0;
         this.difficulty = (data?.difficulty) || this.difficulty;
-        if (data?.interval) {
-            this.difficulty = Object.keys(Difficulty).find(x => Difficulty[x as keyof typeof Difficulty] === data.interval) || this.difficulty;
-        }
         this.lastTouchTime = 0;
         this.apple = new Apple(this, data && data.apple && data.apple.position);
         this.snake = new Snake(this, data && data.snake && data.snake.body);
@@ -114,7 +107,7 @@ export class Game implements Drawable {
             this.canvas.parentElement.clientWidth);
         this.canvas.width = size;
         this.canvas.height = size;
-        this.unitWidth = this.canvas.width / constants.SIZE;
+        this.unitWidth = this.canvas.width / constants.GAME_SIZE;
     }
 
     onPlayingInput(e: any) {
@@ -125,7 +118,7 @@ export class Game implements Drawable {
         }
 
         // handle touch and mouse input
-        let touch;
+        let touch: Point | undefined;
         if (e.type === 'touchstart') {
             touch = this.getTapPos(e.changedTouches[0]);
         } else if (e.type === 'mousedown') {
@@ -133,13 +126,14 @@ export class Game implements Drawable {
         }
 
         if (touch) {
-// pause on two finger taps
+            // pause on two finger taps
             const now = performance.now();
             if (now - this.lastTouchTime <= constants.DOUBLE_TAP_PAUSE_TIME_LIMIT &&
                 touch.distanceFrom(this.lastTouch) <= this.unitWidth) {
                 this.pause();
                 return;
             }
+
             this.lastTouch = touch;
             this.lastTouchTime = now;
 
@@ -154,13 +148,7 @@ export class Game implements Drawable {
                     };
                 });
 
-            directionDistancesFromTouch.sort((a, b) => {
-                if (a.distance < b.distance)
-                    return -1;
-                if (a.distance > b.distance)
-                    return 1;
-                return 0;
-            });
+            directionDistancesFromTouch.sort((a, b) => a.distance - b.distance);
 
             for (const d of directionDistancesFromTouch) {
                 if (this.snake.tryQueueNewDirection(d.direction)) {
@@ -191,9 +179,11 @@ export class Game implements Drawable {
             e.stopPropagation();
             e.preventDefault();
         }
+
         if (e.type !== 'blur' && e.type !== 'resize') {
             this.canvas.focus();
         }
+
         switch (this.gameState) {
             case GameState.StartMenu:
                 this.startMenu.oninput(e);
@@ -216,7 +206,7 @@ export class Game implements Drawable {
         this.save();
     }
 
-    getTapPos(e: any) {
+    getTapPos(e: any): Point {
         const rect = this.canvas.getBoundingClientRect();
         return new Point(
             e.clientX - rect.left,

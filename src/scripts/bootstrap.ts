@@ -1,7 +1,7 @@
 import { Game } from './game.ts';
 import { throwIfNull } from './utils.ts';
 
-let localStorage: Storage | null = null;
+let localStorage: Storage | undefined;
 try {
     localStorage = window.localStorage;
 } catch (err: any) {

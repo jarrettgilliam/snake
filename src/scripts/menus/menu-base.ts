@@ -5,6 +5,7 @@ import { CanvasButton } from '../controls/canvas-button.ts';
 import { Keys } from '../enums/keys.ts';
 import { Game } from '../game.ts';
 import { GameState } from '../enums/game-state.ts';
+import { Point } from '../primitives/point.ts';
 
 export class MenuBase implements Drawable {
     protected readonly game: Game;
@@ -13,7 +14,11 @@ export class MenuBase implements Drawable {
     private readonly labels: CanvasLabel[];
     protected readonly buttons: CanvasButton[];
 
-    constructor(game: Game, nextGameState: GameState | (() => GameState), acceptSelectedCallback: () => void, labels: CanvasLabel[], buttons: CanvasButton[]) {
+    constructor(game: Game,
+                nextGameState: GameState | (() => GameState),
+                acceptSelectedCallback: () => void,
+                labels: CanvasLabel[],
+                buttons: CanvasButton[]) {
         this.game = game;
         this.nextGameState = getValueAsFunction(nextGameState);
         this.acceptSelectedCallback = acceptSelectedCallback;
@@ -60,8 +65,8 @@ export class MenuBase implements Drawable {
     oninput(e: any) {
 
         // handle touch and mouse input
-        let touch;
-        let touchstart;
+        let touch: Point | undefined;
+        let touchstart = false;
 
         if (e.type.startsWith('touch')) {
             touch = this.game.getTapPos(e.changedTouches[0]);
@@ -122,11 +127,7 @@ export class MenuBase implements Drawable {
     }
 
     draw() {
-        for (const label of this.labels) {
-            label.draw();
-        }
-        for (const button of this.buttons) {
-            button.draw();
-        }
+        this.labels.forEach(l => l.draw());
+        this.buttons.forEach(b => b.draw());
     }
 }

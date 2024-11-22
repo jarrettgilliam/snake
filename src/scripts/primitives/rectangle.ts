@@ -8,12 +8,11 @@ export class Rectangle extends Point implements Drawable {
     private _width!: () => number;
     private _height!: () => number;
 
-    constructor(
-        game: Game,
-        x: number | (() => number),
-        y: number | (() => number),
-        width: number | (() => number),
-        height: number | (() => number)){
+    constructor(game: Game,
+                x: number | (() => number),
+                y: number | (() => number),
+                width: number | (() => number),
+                height: number | (() => number)) {
         super(x, y);
         this.game = game;
         this.width = width;
