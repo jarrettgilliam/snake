@@ -38,3 +38,12 @@ export function throwIfNull<T>(value: T | null): T {
 
     return value;
 }
+
+export function debounce(func: () => void, timeout: number): () => void {
+    let timeoutId: number;
+
+    return () => {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(func, timeout);
+    };
+}

@@ -2,7 +2,10 @@ import { defineConfig } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
-    base: '',
+    base: '/snake/',
+    // server: {
+    //     host: '0.0.0.0'
+    // },
     plugins: [
         VitePWA({
             registerType: 'autoUpdate',

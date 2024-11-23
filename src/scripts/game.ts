@@ -2,7 +2,7 @@ import { GameState } from './enums/game-state.ts';
 import { Keys } from './enums/keys.ts';
 import { Point } from './primitives/point.ts';
 import { Direction } from './enums/direction.ts';
-import { getCode, throwIfNull } from './utils.ts';
+import { debounce, getCode, throwIfNull } from './utils.ts';
 import { Drawable } from './interfaces/drawable.ts';
 import { Apple } from './entities/apple.ts';
 import { Snake } from './entities/snake.ts';
@@ -42,7 +42,7 @@ export class Game implements Drawable {
 
         this.background = "#8dc100";
 
-        window.addEventListener('resize', () => this.onresize());
+        window.addEventListener('resize', debounce(() => this.onresize(), 100));
         window.addEventListener('keydown', e => this.oninput(e));
         canvas.addEventListener('touchstart', e => this.oninput(e));
         canvas.addEventListener('touchend', e => this.oninput(e));
@@ -106,6 +106,7 @@ export class Game implements Drawable {
         const size = Math.min(
             this.canvas.parentElement.clientHeight,
             this.canvas.parentElement.clientWidth);
+
         this.canvas.width = size;
         this.canvas.height = size;
         this.unitWidth = this.canvas.width / constants.GAME_SIZE;
