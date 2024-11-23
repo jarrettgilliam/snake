@@ -30,13 +30,13 @@ export default defineConfig({
             workbox: {
                 runtimeCaching: [
                     {
-                        urlPattern: /^\/snake\//,
+                        urlPattern: /\.(svg|woff2)$/,
                         handler: 'CacheFirst',
                         options: {
                             cacheName: 'snake-cache',
                             expiration: {
                                 maxEntries: 50,
-                                maxAgeSeconds: 30 * 24 * 60 * 60 // 30 Days
+                                maxAgeSeconds: 60 * 60 * 24 * 365 // <== 365 days
                             }
                         }
                     }
