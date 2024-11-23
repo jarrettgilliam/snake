@@ -10,7 +10,7 @@ import * as constants from './constants.ts';
 import { StartMenu } from './menus/start-menu.ts';
 import { PauseMenu } from './menus/pause-menu.ts';
 import { GameOverMenu } from './menus/game-over-menu.ts';
-import { DefaultDifficulty, Difficulty } from './enums/difficulty.ts';
+import { DEFAULT_DIFFICULTY, Difficulty } from './enums/difficulty.ts';
 import { SaveData } from './interfaces/save-data.ts';
 import { SAVE_DATA_STORAGE_KEY } from './constants.ts';
 
@@ -20,7 +20,7 @@ export class Game implements Drawable {
     public readonly background: string;
     public gameState: GameState;
     public score = 0;
-    public difficulty: Difficulty = DefaultDifficulty;
+    public difficulty: Difficulty = DEFAULT_DIFFICULTY;
     public unitWidth = 0;
     public apple!: Apple;
     public snake!: Snake;
@@ -94,12 +94,12 @@ export class Game implements Drawable {
         return true;
     }
 
-    reset(data?: SaveData) {
-        this.score = (data?.score) || 0;
-        this.difficulty = (data?.difficulty) || this.difficulty;
+    reset(data: SaveData) {
+        this.score = data.score;
+        this.difficulty = data.difficulty;
         this.lastTouchTime = 0;
-        this.apple = new Apple(this, data?.apple.position);
-        this.snake = new Snake(this, data?.snake.body);
+        this.apple = new Apple(this, data.apple.position);
+        this.snake = new Snake(this, data.snake.body);
     }
 
     onresize() {

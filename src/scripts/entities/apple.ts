@@ -10,9 +10,9 @@ export class Apple implements Drawable {
     private readonly game: Game;
     private readonly body: Rectangle[];
 
-    constructor(game: Game, position?: PointData) {
+    constructor(game: Game, position: PointData) {
         this.game = game;
-        this.position = position ? Point.fromJSON(position) : new Point(14, 9);
+        this.position = Point.fromJSON(position);
         this.body = [
             new Rectangle(this.game, () => this.position.x + 0 / 3, () => this.position.y + 1 / 3, 1 / 3, 1 / 3),
             new Rectangle(this.game, () => this.position.x + 1 / 3, () => this.position.y + 0 / 3, 1 / 3, 1 / 3),

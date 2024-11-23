@@ -16,7 +16,7 @@ export class Snake implements Drawable {
     private newVelocityQueue: Point[];
     private dying = false;
 
-    constructor(game: Game, bodyPoints?: PointData[]) {
+    constructor(game: Game, bodyPoints: PointData[]) {
         this.game = game;
 
         this.nextUpdateTime = 0;
@@ -24,13 +24,7 @@ export class Snake implements Drawable {
         this.newVelocityQueue = [];
         this.body = [];
 
-        if (bodyPoints) {
-            bodyPoints.forEach(p => this.grow(Point.fromJSON(p)));
-        } else {
-            this.grow(new Point(4, 9));
-            this.grow(new Point(3, 9));
-            this.grow(new Point(2, 9));
-        }
+        bodyPoints.forEach(p => this.grow(Point.fromJSON(p)));
     }
 
     get head() {

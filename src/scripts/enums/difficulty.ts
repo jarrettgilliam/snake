@@ -9,4 +9,4 @@ export const Difficulty = {
 
 export type Difficulty = keyof typeof Difficulty;
 
-export const DefaultDifficulty = 'Medium';
+export const DEFAULT_DIFFICULTY = 'Medium';
