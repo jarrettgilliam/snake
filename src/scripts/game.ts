@@ -11,6 +11,8 @@ import { StartMenu } from './menus/start-menu.ts';
 import { PauseMenu } from './menus/pause-menu.ts';
 import { GameOverMenu } from './menus/game-over-menu.ts';
 import { DefaultDifficulty, Difficulty } from './enums/difficulty.ts';
+import { SaveData } from './interfaces/save-data.ts';
+import { SAVE_DATA_STORAGE_KEY } from './constants.ts';
 
 export class Game implements Drawable {
     public readonly canvas: HTMLCanvasElement;
@@ -58,7 +60,7 @@ export class Game implements Drawable {
             return;
         }
 
-        const data = JSON.stringify({
+        const saveData: SaveData = {
             score: this.score,
             difficulty: this.difficulty,
             apple: {
@@ -67,13 +69,13 @@ export class Game implements Drawable {
             snake: {
                 body: this.snake.body.map(x => x.position)
             }
-        });
+        };
 
-        this.storage.setItem('snake', data);
+        this.storage.setItem(SAVE_DATA_STORAGE_KEY, JSON.stringify(saveData));
     }
 
     removeSave() {
-        this.storage?.removeItem('snake');
+        this.storage?.removeItem(SAVE_DATA_STORAGE_KEY);
     }
 
     load() {
@@ -81,7 +83,7 @@ export class Game implements Drawable {
             return false;
         }
 
-        const data = this.storage.getItem('snake');
+        const data = this.storage.getItem(SAVE_DATA_STORAGE_KEY);
 
         if (!data) {
             return false;
@@ -92,12 +94,12 @@ export class Game implements Drawable {
         return true;
     }
 
-    reset(data?: any) {
+    reset(data?: SaveData) {
         this.score = (data?.score) || 0;
         this.difficulty = (data?.difficulty) || this.difficulty;
         this.lastTouchTime = 0;
-        this.apple = new Apple(this, data && data.apple && data.apple.position);
-        this.snake = new Snake(this, data && data.snake && data.snake.body);
+        this.apple = new Apple(this, data?.apple.position);
+        this.snake = new Snake(this, data?.snake.body);
     }
 
     onresize() {

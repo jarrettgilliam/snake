@@ -6,6 +6,7 @@ import { Point } from '../primitives/point.ts';
 import { Difficulty } from '../enums/difficulty.ts';
 import { GameState } from '../enums/game-state.ts';
 import { Game } from '../game.ts';
+import { PointData } from '../interfaces/point-data.ts';
 
 export class Snake implements Drawable {
     public readonly body: SnakeBodyPart[];
@@ -15,7 +16,7 @@ export class Snake implements Drawable {
     private newVelocityQueue: Point[];
     private dying = false;
 
-    constructor(game: Game, bodyPoints?: { x: number, y: number }[]) {
+    constructor(game: Game, bodyPoints?: PointData[]) {
         this.game = game;
 
         this.nextUpdateTime = 0;

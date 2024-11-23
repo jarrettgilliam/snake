@@ -1,4 +1,5 @@
 import { getValueAsFunction } from '../utils.ts';
+import { PointData } from '../interfaces/point-data.ts';
 
 export class Point {
     private _x!: () => number;
@@ -51,14 +52,14 @@ export class Point {
         return Math.sqrt((x - this.x) ** 2 + (y - this.y) ** 2);
     }
 
-    toJSON(): { x: number, y: number } {
+    toJSON(): PointData {
         return {
             x: this.x,
             y: this.y
         };
     }
 
-    static fromJSON(obj: { x: number, y: number }): Point {
+    static fromJSON(obj: PointData): Point {
         return new Point(obj.x, obj.y);
     }
 }

@@ -3,13 +3,14 @@ import { Point } from '../primitives/point.ts';
 import { Rectangle } from '../primitives/rectangle.ts';
 import * as constants from '../constants.ts';
 import { Game } from '../game.ts';
+import { PointData } from '../interfaces/point-data.ts';
 
 export class Apple implements Drawable {
     public position: Point;
     private readonly game: Game;
     private readonly body: Rectangle[];
 
-    constructor(game: Game, position?: Point) {
+    constructor(game: Game, position?: PointData) {
         this.game = game;
         this.position = position ? Point.fromJSON(position) : new Point(14, 9);
         this.body = [
