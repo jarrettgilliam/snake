@@ -4,9 +4,9 @@ import { Difficulty } from '../enums/difficulty.ts';
 import { CanvasButton } from '../controls/canvas-button.ts';
 import { GameState } from '../enums/game-state.ts';
 import { Game } from '../game.ts';
-import { InitialSaveData } from '../interfaces/save-data.ts';
+import { InitialState, SaveData } from '../interfaces/save-data.ts';
 
-export class StartMenu extends MenuBase {
+export class StartMenu extends MenuBase<Difficulty> {
 
     constructor(game: Game) {
         const labels = [
@@ -14,20 +14,26 @@ export class StartMenu extends MenuBase {
             new CanvasLabel(game, "CHOOSE YOUR DIFFICULTY", 0.6, 13 / 32)
         ];
 
-        const buttons: CanvasButton[] = [];
+        const buttons: CanvasButton<Difficulty>[] = [];
         Object.keys(Difficulty).forEach((key, index) => {
-            buttons.push(new CanvasButton(game, key, 0.8, 15 / 32 + index / 12));
+            buttons.push(new CanvasButton(game, key, 0.8, 15 / 32 + index / 12, key as Difficulty));
         });
 
-        super(game, GameState.Playing, () => this.setupGame(), labels, buttons);
+        super(game, labels, buttons);
     }
 
     get defaultButtonIndex() {
         return this.buttons.findIndex(b => b.text() === this.game.difficulty);
     }
 
-    setupGame() {
-        this.game.reset(InitialSaveData);
-        this.game.difficulty = this.buttons[this.buttonIndex].text() as Difficulty;
+    acceptSelected(buttonData: Difficulty): GameState {
+        const data: SaveData = {
+            ...InitialState,
+            difficulty: buttonData
+        }
+
+        this.game.reset(data);
+
+        return GameState.Playing;
     }
 }

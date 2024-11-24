@@ -1,5 +1,5 @@
 import { Drawable } from '../interfaces/drawable.ts';
-import { getCode, getValueAsFunction } from '../utils.ts';
+import { getCode } from '../utils.ts';
 import { CanvasLabel } from '../controls/canvas-label.ts';
 import { CanvasButton } from '../controls/canvas-button.ts';
 import { Keys } from '../enums/keys.ts';
@@ -7,21 +7,15 @@ import { Game } from '../game.ts';
 import { GameState } from '../enums/game-state.ts';
 import { Point } from '../primitives/point.ts';
 
-export class MenuBase implements Drawable {
+export abstract class MenuBase<T> implements Drawable {
     protected readonly game: Game;
-    private readonly nextGameState: () => GameState;
-    private readonly acceptSelectedCallback: () => void;
     private readonly labels: CanvasLabel[];
-    protected readonly buttons: CanvasButton[];
+    protected readonly buttons: CanvasButton<T>[];
 
-    constructor(game: Game,
-                nextGameState: GameState | (() => GameState),
-                acceptSelectedCallback: () => void,
-                labels: CanvasLabel[],
-                buttons: CanvasButton[]) {
+    protected constructor(game: Game,
+                          labels: CanvasLabel[],
+                          buttons: CanvasButton<T>[]) {
         this.game = game;
-        this.nextGameState = getValueAsFunction(nextGameState);
-        this.acceptSelectedCallback = acceptSelectedCallback;
         this.labels = labels;
         this.buttons = buttons;
         this.resetButtonIndex();
@@ -63,8 +57,11 @@ export class MenuBase implements Drawable {
     }
 
     oninput(e: any) {
+        this.handleTouchAndMouseInput(e);
+        this.handleKeyboardInput(e);
+    }
 
-        // handle touch and mouse input
+    private handleTouchAndMouseInput(e: any) {
         let touch: Point | undefined;
         let touchstart = false;
 
@@ -84,7 +81,7 @@ export class MenuBase implements Drawable {
                     if (touchstart) {
                         this.buttonIndex = i;
                     } else if (this.buttonIndex === i) {
-                        this.acceptSelectedOption();
+                        this.tryAcceptSelected();
                     }
                     break;
                 }
@@ -93,22 +90,22 @@ export class MenuBase implements Drawable {
                 this.clearButtonIndex();
             }
         }
+    }
 
-        // handle keyboard input
+    private handleKeyboardInput(e: any) {
         if (e.type === 'keydown') {
             const code = getCode(e);
             if (code === Keys.Escape) {
                 this.clearButtonIndex();
             } else if (code === Keys.Enter) {
-                this.acceptSelectedOption();
+                this.tryAcceptSelected();
             } else {
                 if (code === Keys.ArrowLeft ||
                     code === Keys.A ||
                     code === Keys.ArrowUp ||
                     code === Keys.W) {
                     this.buttonIndex--;
-                }
-                else if (
+                } else if (
                     code === Keys.ArrowRight ||
                     code === Keys.D ||
                     code === Keys.ArrowDown ||
@@ -119,12 +116,17 @@ export class MenuBase implements Drawable {
         }
     }
 
-    acceptSelectedOption() {
-        if (this.buttonIndex >= 0) {
-            this.game.gameState = this.nextGameState();
-            this.acceptSelectedCallback();
+    tryAcceptSelected() {
+        if (this.buttonIndex >= 0 && this.buttonIndex < this.buttons.length) {
+            this.game.gameState = this.acceptSelected(this.buttons[this.buttonIndex].data);
         }
     }
+
+    /**
+     * Accept the selected button and return the new game state.
+     * @param buttonData - The data associated with the selected button.
+     */
+    abstract acceptSelected(buttonData: T): GameState;
 
     draw() {
         this.labels.forEach(l => l.draw());

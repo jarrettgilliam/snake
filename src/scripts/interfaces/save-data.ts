@@ -12,7 +12,7 @@ export interface SaveData {
     };
 }
 
-export const InitialSaveData: SaveData = {
+export const InitialState: SaveData = {
     score: 0,
     difficulty: DEFAULT_DIFFICULTY,
     apple: {

@@ -2,10 +2,10 @@ import { CanvasLabel } from './canvas-label.ts';
 import { Point } from '../primitives/point.ts';
 import { Game } from '../game.ts';
 
-export class CanvasButton extends CanvasLabel {
+export class CanvasButton<T> extends CanvasLabel {
     public selected: boolean;
 
-    constructor(game: Game, text: string, sizeFactor: number, YFactor: number) {
+    constructor(game: Game, text: string, sizeFactor: number, YFactor: number, public data: T) {
         super(game, text, sizeFactor, YFactor)
         this.selected = false;
     }
