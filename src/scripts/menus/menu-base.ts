@@ -6,6 +6,7 @@ import { Keys } from '../enums/keys.ts';
 import { Game } from '../game.ts';
 import { GameState } from '../enums/game-state.ts';
 import { Point } from '../primitives/point.ts';
+import { InputEvent } from '../interfaces/input-event.ts';
 
 export abstract class MenuBase<T> implements Drawable {
     protected readonly game: Game;
@@ -56,19 +57,19 @@ export abstract class MenuBase<T> implements Drawable {
         }
     }
 
-    oninput(e: any) {
+    oninput(e: InputEvent) {
         this.handleTouchAndMouseInput(e);
         this.handleKeyboardInput(e);
     }
 
-    private handleTouchAndMouseInput(e: any) {
+    private handleTouchAndMouseInput(e: InputEvent) {
         let touch: Point | undefined;
         let touchstart = false;
 
-        if (e.type.startsWith('touch')) {
+        if (e.type.startsWith('touch') && e instanceof TouchEvent) {
             touch = this.game.getTapPos(e.changedTouches[0]);
             touchstart = e.type === 'touchstart';
-        } else if (e.type.startsWith('mouse')) {
+        } else if (e.type.startsWith('mouse') && e instanceof MouseEvent) {
             touch = this.game.getTapPos(e);
             touchstart = e.type === 'mousedown';
         }
@@ -92,8 +93,8 @@ export abstract class MenuBase<T> implements Drawable {
         }
     }
 
-    private handleKeyboardInput(e: any) {
-        if (e.type === 'keydown') {
+    private handleKeyboardInput(e: InputEvent) {
+        if (e.type === 'keydown' && e instanceof KeyboardEvent) {
             const code = getCode(e);
             if (code === Keys.Escape) {
                 this.clearButtonIndex();

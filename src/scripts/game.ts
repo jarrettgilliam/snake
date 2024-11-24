@@ -13,6 +13,7 @@ import { GameOverMenu } from './menus/game-over-menu.ts';
 import { DEFAULT_DIFFICULTY, Difficulty } from './enums/difficulty.ts';
 import { SaveData } from './interfaces/save-data.ts';
 import { SAVE_DATA_STORAGE_KEY } from './constants.ts';
+import { InputEvent } from './interfaces/input-event.ts';
 
 export class Game implements Drawable {
     public readonly canvas: HTMLCanvasElement;
@@ -114,7 +115,7 @@ export class Game implements Drawable {
         this.unitWidth = this.canvas.width / constants.GAME_SIZE;
     }
 
-    onPlayingInput(e: any) {
+    onPlayingInput(e: InputEvent) {
         // pause when the canvas loses focus
         if (e.type === 'blur') {
             this.pause();
@@ -123,9 +124,9 @@ export class Game implements Drawable {
 
         // handle touch and mouse input
         let touch: Point | undefined;
-        if (e.type === 'touchstart') {
+        if (e.type === 'touchstart' && e instanceof TouchEvent) {
             touch = this.getTapPos(e.changedTouches[0]);
-        } else if (e.type === 'mousedown') {
+        } else if (e.type === 'mousedown' && e instanceof MouseEvent) {
             touch = this.getTapPos(e);
         }
 
@@ -162,7 +163,7 @@ export class Game implements Drawable {
         }
 
         // handle keyboard input
-        if (e.type === 'keydown') {
+        if (e.type === 'keydown' && e instanceof KeyboardEvent) {
             const code = getCode(e);
             if (code === Keys.ArrowLeft || code === Keys.A) {
                 this.snake.tryQueueNewDirection(Direction.Left);
@@ -178,7 +179,7 @@ export class Game implements Drawable {
         }
     }
 
-    oninput(e: any) {
+    oninput(e: InputEvent) {
         if (e.type.startsWith('touch')) {
             e.stopPropagation();
             e.preventDefault();
@@ -210,7 +211,7 @@ export class Game implements Drawable {
         this.save();
     }
 
-    getTapPos(e: any): Point {
+    getTapPos(e: { clientX: number, clientY: number }): Point {
         const rect = this.canvas.getBoundingClientRect();
         return new Point(
             e.clientX - rect.left,
