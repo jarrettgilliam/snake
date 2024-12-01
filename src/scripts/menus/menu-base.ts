@@ -1,12 +1,13 @@
 import { Drawable } from '../interfaces/drawable.ts';
-import { getCode } from '../utils.ts';
 import { CanvasLabel } from '../controls/canvas-label.ts';
 import { CanvasButton } from '../controls/canvas-button.ts';
-import { Keys } from '../enums/keys.ts';
+import { getKeyboardCode, KeyboardCode } from '../enums/keyboard-code.ts';
 import { Game } from '../game.ts';
 import { GameState } from '../enums/game-state.ts';
 import { Point } from '../primitives/point.ts';
-import { InputEvent } from '../interfaces/input-event.ts';
+import { InputEvent } from '../events/input-event.ts';
+import { toKeyboardCode } from '../enums/gamepad-buttons.ts';
+import { isSnakeGamepadEvent } from '../events/snake-gamepad-event.ts';
 
 export abstract class MenuBase<T> implements Drawable {
     protected readonly game: Game;
@@ -59,7 +60,7 @@ export abstract class MenuBase<T> implements Drawable {
 
     oninput(e: InputEvent) {
         this.handleTouchAndMouseInput(e);
-        this.handleKeyboardInput(e);
+        this.handleKeyboardAndGamepadInput(e);
     }
 
     private handleTouchAndMouseInput(e: InputEvent) {
@@ -72,48 +73,52 @@ export abstract class MenuBase<T> implements Drawable {
         } else if (e.type.startsWith('mouse') && e instanceof MouseEvent) {
             touch = this.game.getTapPos(e);
             touchstart = e.type === 'mousedown';
+        } else {
+            return;
         }
 
-        if (touch) {
-            let found = false;
-            for (let i = 0; i < this.buttons.length; i++) {
-                if (this.buttons[i].intersects(touch)) {
-                    found = true;
-                    if (touchstart) {
-                        this.buttonIndex = i;
-                    } else if (this.buttonIndex === i) {
-                        this.tryAcceptSelected();
-                    }
-                    break;
+        let found = false;
+        for (let i = 0; i < this.buttons.length; i++) {
+            if (this.buttons[i].intersects(touch)) {
+                found = true;
+                if (touchstart) {
+                    this.buttonIndex = i;
+                } else if (this.buttonIndex === i) {
+                    this.tryAcceptSelected();
                 }
+                break;
             }
-            if (!found) {
-                this.clearButtonIndex();
-            }
+        }
+        if (!found) {
+            this.clearButtonIndex();
         }
     }
 
-    private handleKeyboardInput(e: InputEvent) {
+    private handleKeyboardAndGamepadInput(e: InputEvent) {
+        let code: KeyboardCode | undefined;
+
         if (e.type === 'keydown' && e instanceof KeyboardEvent) {
-            const code = getCode(e);
-            if (code === Keys.Escape) {
-                this.clearButtonIndex();
-            } else if (code === Keys.Enter) {
-                this.tryAcceptSelected();
-            } else {
-                if (code === Keys.ArrowLeft ||
-                    code === Keys.A ||
-                    code === Keys.ArrowUp ||
-                    code === Keys.W) {
-                    this.buttonIndex--;
-                } else if (
-                    code === Keys.ArrowRight ||
-                    code === Keys.D ||
-                    code === Keys.ArrowDown ||
-                    code === Keys.S) {
-                    this.buttonIndex++;
-                }
-            }
+            code = getKeyboardCode(e);
+        } else if (e.type === 'buttondown' && isSnakeGamepadEvent(e)) {
+            code = toKeyboardCode(e.button);
+        } else {
+            return;
+        }
+
+        if (code === KeyboardCode.Escape) {
+            this.clearButtonIndex();
+        } else if (code === KeyboardCode.Enter) {
+            this.tryAcceptSelected();
+        } else if (code === KeyboardCode.ArrowLeft ||
+            code === KeyboardCode.A ||
+            code === KeyboardCode.ArrowUp ||
+            code === KeyboardCode.W) {
+            this.buttonIndex--;
+        } else if (code === KeyboardCode.ArrowRight ||
+            code === KeyboardCode.D ||
+            code === KeyboardCode.ArrowDown ||
+            code === KeyboardCode.S) {
+            this.buttonIndex++;
         }
     }
 

@@ -1,8 +1,8 @@
 import { GameState } from './enums/game-state.ts';
-import { Keys } from './enums/keys.ts';
+import { getKeyboardCode, KeyboardCode } from './enums/keyboard-code.ts';
 import { Point } from './primitives/point.ts';
 import { Direction } from './enums/direction.ts';
-import { debounce, getCode, throwIfNull } from './utils.ts';
+import { debounce, throwIfNull } from './utils.ts';
 import { Drawable } from './interfaces/drawable.ts';
 import { Apple } from './entities/apple.ts';
 import { Snake } from './entities/snake.ts';
@@ -13,7 +13,10 @@ import { GameOverMenu } from './menus/game-over-menu.ts';
 import { DEFAULT_DIFFICULTY, Difficulty } from './enums/difficulty.ts';
 import { SaveData } from './interfaces/save-data.ts';
 import { SAVE_DATA_STORAGE_KEY } from './constants.ts';
-import { InputEvent } from './interfaces/input-event.ts';
+import { InputEvent } from './events/input-event.ts';
+import { GamepadEventSource } from './events/gamepad-event-source.ts';
+import { toKeyboardCode } from './enums/gamepad-buttons.ts';
+import { isSnakeGamepadEvent } from './events/snake-gamepad-event.ts';
 
 export class Game implements Drawable {
     public readonly canvas: HTMLCanvasElement;
@@ -29,6 +32,7 @@ export class Game implements Drawable {
     private readonly startMenu: StartMenu;
     private readonly pauseMenu: PauseMenu;
     private readonly gameOverMenu: GameOverMenu;
+    private readonly gamepadEventSource: GamepadEventSource;
     private lastTouchTime = 0;
     private lastTouch?: Point;
 
@@ -42,6 +46,7 @@ export class Game implements Drawable {
         this.startMenu = new StartMenu(this);
         this.pauseMenu = new PauseMenu(this);
         this.gameOverMenu = new GameOverMenu(this);
+        this.gamepadEventSource = new GamepadEventSource();
 
         this.background = "#8dc100";
 
@@ -52,6 +57,7 @@ export class Game implements Drawable {
         canvas.addEventListener('mousedown', e => this.oninput(e));
         canvas.addEventListener('mouseup', e => this.oninput(e));
         canvas.addEventListener('blur', e => this.oninput(e));
+        this.gamepadEventSource.addEventListener('buttondown', e => this.oninput(e));
 
         this.gameState = this.load() ? GameState.Paused : GameState.StartMenu;
     }
@@ -162,25 +168,31 @@ export class Game implements Drawable {
             }
         }
 
-        // handle keyboard input
+        // handle keyboard and gamepad input
+        let code: KeyboardCode | undefined;
         if (e.type === 'keydown' && e instanceof KeyboardEvent) {
-            const code = getCode(e);
-            if (code === Keys.ArrowLeft || code === Keys.A) {
+            code = getKeyboardCode(e);
+        } else if (e.type === 'buttondown' && isSnakeGamepadEvent(e)) {
+            code = toKeyboardCode(e.button);
+        }
+
+        if (code) {
+            if (code === KeyboardCode.ArrowLeft || code === KeyboardCode.A) {
                 this.snake.tryQueueNewDirection(Direction.Left);
-            } else if (code === Keys.ArrowUp || code === Keys.W) {
+            } else if (code === KeyboardCode.ArrowUp || code === KeyboardCode.W) {
                 this.snake.tryQueueNewDirection(Direction.Up);
-            } else if (code === Keys.ArrowRight || code === Keys.D) {
+            } else if (code === KeyboardCode.ArrowRight || code === KeyboardCode.D) {
                 this.snake.tryQueueNewDirection(Direction.Right);
-            } else if (code === Keys.ArrowDown || code === Keys.S) {
+            } else if (code === KeyboardCode.ArrowDown || code === KeyboardCode.S) {
                 this.snake.tryQueueNewDirection(Direction.Down);
-            } else if (code === Keys.Enter || code === Keys.Escape) {
+            } else if (code === KeyboardCode.Enter || code === KeyboardCode.Escape) {
                 this.pause();
             }
         }
     }
 
     oninput(e: InputEvent) {
-        if (e.type.startsWith('touch')) {
+        if (e.type.startsWith('touch') && e instanceof TouchEvent) {
             e.stopPropagation();
             e.preventDefault();
         }
@@ -188,6 +200,14 @@ export class Game implements Drawable {
         if (e.type !== 'blur' && e.type !== 'resize') {
             this.canvas.focus();
         }
+
+        // if (isSnakeGamepadEvent(e)) {
+        //     Object.keys(GamepadButtons).forEach(key => {
+        //         if (GamepadButtons[key as keyof typeof GamepadButtons] === e.button) {
+        //             console.log(`Gamepad button ${e.button} is ${key}`);
+        //         }
+        //     });
+        // }
 
         switch (this.gameState) {
             case GameState.StartMenu:
@@ -230,6 +250,7 @@ export class Game implements Drawable {
     }
 
     update(now: DOMHighResTimeStamp) {
+        this.gamepadEventSource.update();
         if (this.gameState === GameState.Playing) {
             this.snake.update(now);
         }
