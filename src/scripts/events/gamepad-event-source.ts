@@ -2,7 +2,7 @@ import { SnakeGamepadEvent, SnakeGamepadEventType } from './snake-gamepad-event.
 
 export class GamepadEventSource {
     private readonly listenersMap: Map<SnakeGamepadEventType, ((e: SnakeGamepadEvent) => void)[]> = new Map();
-    private readonly previousGamepadState: Map<number, { buttons: ReadonlyArray<GamepadButton> }> = new Map();
+    private readonly previousGamepadState: Map<number, { buttonPressed: boolean[] }> = new Map();
 
     addEventListener(type: SnakeGamepadEventType, listener: (e: SnakeGamepadEvent) => void) {
         let l = this.listenersMap.get(type);
@@ -24,17 +24,17 @@ export class GamepadEventSource {
             let prev = this.previousGamepadState.get(gamepad.index);
 
             if (!prev) {
-                prev = { buttons: [] };
+                prev = { buttonPressed: [] };
                 this.previousGamepadState.set(gamepad.index, prev);
             }
 
             gamepad.buttons.forEach((button, i) => {
-                if (button.pressed && !prev.buttons[i]?.pressed) {
+                if (button.pressed && !prev.buttonPressed[i]) {
                     this.emitButtonDown(i);
                 }
-            });
 
-            prev.buttons = gamepad.buttons;
+                prev.buttonPressed[i] = button.pressed;
+            });
         }
     }
 
