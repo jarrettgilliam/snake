@@ -61,6 +61,7 @@ export abstract class MenuBase<T> implements Drawable {
     oninput(e: InputEvent) {
         this.handleTouchAndMouseInput(e);
         this.handleKeyboardAndGamepadInput(e);
+        this.handleJoystickInput(e);
     }
 
     private handleTouchAndMouseInput(e: InputEvent) {
@@ -99,7 +100,7 @@ export abstract class MenuBase<T> implements Drawable {
 
         if (e.type === 'keydown' && e instanceof KeyboardEvent) {
             code = getKeyboardCode(e);
-        } else if (e.type === 'buttondown' && isSnakeGamepadEvent(e)) {
+        } else if (isSnakeGamepadEvent(e) && e.type === 'buttondown') {
             code = toKeyboardCode(e.button);
         } else {
             return;
@@ -119,6 +120,12 @@ export abstract class MenuBase<T> implements Drawable {
             code === KeyboardCode.ArrowDown ||
             code === KeyboardCode.S) {
             this.buttonIndex++;
+        }
+    }
+
+    private handleJoystickInput(e: InputEvent) {
+        if (isSnakeGamepadEvent(e) && e.type === 'joystickdirectionchanged') {
+            this.buttonIndex += e.direction.x + e.direction.y;
         }
     }
 

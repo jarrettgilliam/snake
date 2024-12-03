@@ -4,7 +4,7 @@ import { Difficulty } from '../enums/difficulty.ts';
 import { CanvasButton } from '../controls/canvas-button.ts';
 import { GameState } from '../enums/game-state.ts';
 import { Game } from '../game.ts';
-import { InitialState, SaveData } from '../interfaces/save-data.ts';
+import { getInitialSaveData, SaveData } from '../interfaces/save-data.ts';
 
 export class StartMenu extends MenuBase<Difficulty> {
 
@@ -28,7 +28,7 @@ export class StartMenu extends MenuBase<Difficulty> {
 
     acceptSelected(buttonData: Difficulty): GameState {
         const data: SaveData = {
-            ...InitialState,
+            ...getInitialSaveData(),
             difficulty: buttonData
         }
 

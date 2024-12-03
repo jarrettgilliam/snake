@@ -62,4 +62,8 @@ export class Point {
     static fromJSON(obj: PointData): Point {
         return new Point(obj.x, obj.y);
     }
+
+    toString(): string {
+        return `(${this.x}, ${this.y})`;
+    }
 }

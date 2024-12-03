@@ -1,5 +1,7 @@
 import { KeyboardCode } from './keyboard-code.ts';
 
+// Standard gamepad mapping can be found here:
+// https://w3c.github.io/gamepad/#dfn-standard-gamepad
 export const GamepadButtons = {
     A: 0,
     B: 1,
@@ -11,8 +13,8 @@ export const GamepadButtons = {
     RightTrigger: 7,
     Select: 8,
     Start: 9,
-    LeftStick: 10,
-    RightStick: 11,
+    LeftStickClick: 10,
+    RightStickClick: 11,
     DPad_Up: 12,
     DPad_Down: 13,
     DPad_Left: 14,

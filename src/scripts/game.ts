@@ -58,6 +58,7 @@ export class Game implements Drawable {
         canvas.addEventListener('mouseup', e => this.oninput(e));
         canvas.addEventListener('blur', e => this.oninput(e));
         this.gamepadEventSource.addEventListener('buttondown', e => this.oninput(e));
+        this.gamepadEventSource.addEventListener('joystickdirectionchanged', e => this.oninput(e));
 
         this.gameState = this.load() ? GameState.Paused : GameState.StartMenu;
     }
@@ -172,7 +173,7 @@ export class Game implements Drawable {
         let code: KeyboardCode | undefined;
         if (e.type === 'keydown' && e instanceof KeyboardEvent) {
             code = getKeyboardCode(e);
-        } else if (e.type === 'buttondown' && isSnakeGamepadEvent(e)) {
+        } else if (isSnakeGamepadEvent(e) && e.type === 'buttondown') {
             code = toKeyboardCode(e.button);
         }
 
@@ -189,6 +190,12 @@ export class Game implements Drawable {
                 this.pause();
             }
         }
+
+        if (isSnakeGamepadEvent(e) && e.type === 'joystickdirectionchanged') {
+            if (!e.direction.equals(Direction.None)) {
+                this.snake.tryQueueNewDirection(e.direction);
+            }
+        }
     }
 
     oninput(e: InputEvent) {
@@ -200,14 +207,6 @@ export class Game implements Drawable {
         if (e.type !== 'blur' && e.type !== 'resize') {
             this.canvas.focus();
         }
-
-        // if (isSnakeGamepadEvent(e)) {
-        //     Object.keys(GamepadButtons).forEach(key => {
-        //         if (GamepadButtons[key as keyof typeof GamepadButtons] === e.button) {
-        //             console.log(`Gamepad button ${e.button} is ${key}`);
-        //         }
-        //     });
-        // }
 
         switch (this.gameState) {
             case GameState.StartMenu:
